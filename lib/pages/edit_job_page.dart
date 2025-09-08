@@ -67,8 +67,8 @@ class _EditJobPageState extends State<EditJobPage> {
       text: widget.jobDetails.vehicle,
     );
     _plateNumberController = TextEditingController(
-      text: 'PHP 1234',
-    ); // Default plate number
+      text: 'PHP 1234', // Default plate number
+    );
     _jobDescriptionController = TextEditingController(
       text: widget.jobDetails.jobDescription,
     );
@@ -234,115 +234,581 @@ class _EditJobPageState extends State<EditJobPage> {
           child: Column(
             children: [
               // Header
-              _buildHeader(),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                child: Row(
+                  children: [
+                    GestureDetector(
+                      onTap: () => Navigator.pop(context),
+                      child: Container(
+                        width: 48,
+                        height: 48,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(24),
+                          color: const Color(0xFFF0F2F5),
+                        ),
+                        child: const Icon(
+                          Icons.arrow_back,
+                          color: Color(0xFF121417),
+                          size: 24,
+                        ),
+                      ),
+                    ),
+                    const Expanded(
+                      child: Text(
+                        'Edit Job',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF121417),
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                    const SizedBox(width: 48), // Spacer for centering
+                  ],
+                ),
+              ),
 
               // Form Content
               Expanded(
                 child: SingleChildScrollView(
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // Customer Information Section
-                      _buildSectionTitle('Customer Information'),
-                      _buildTextField(
-                        controller: _customerNameController,
-                        label: 'Customer Name',
-                        hint: 'Enter customer name',
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please enter customer name';
-                          }
-                          return null;
-                        },
+                      const Padding(
+                        padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
+                        child: Text(
+                          'Customer Information',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF121417),
+                          ),
+                        ),
                       ),
-                      _buildTextField(
-                        controller: _phoneNumberController,
-                        label: 'Phone Number',
-                        hint: 'Enter phone number',
-                        keyboardType: TextInputType.phone,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please enter phone number';
-                          }
-                          return null;
-                        },
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Padding(
+                              padding: EdgeInsets.only(bottom: 8),
+                              child: Text(
+                                'Customer Name',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w500,
+                                  color: Color(0xFF121417),
+                                ),
+                              ),
+                            ),
+                            Container(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(12),
+                                color: const Color(0xFFF0F2F5),
+                              ),
+                              child: TextFormField(
+                                controller: _customerNameController,
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Please enter customer name';
+                                  }
+                                  return null;
+                                },
+                                decoration: const InputDecoration(
+                                  hintText: 'Enter customer name',
+                                  hintStyle: TextStyle(
+                                    fontSize: 16,
+                                    color: Color(0xFF61758A),
+                                  ),
+                                  border: InputBorder.none,
+                                  contentPadding: EdgeInsets.all(16),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Padding(
+                              padding: EdgeInsets.only(bottom: 8),
+                              child: Text(
+                                'Phone Number',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w500,
+                                  color: Color(0xFF121417),
+                                ),
+                              ),
+                            ),
+                            Container(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(12),
+                                color: const Color(0xFFF0F2F5),
+                              ),
+                              child: TextFormField(
+                                controller: _phoneNumberController,
+                                keyboardType: TextInputType.phone,
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Please enter phone number';
+                                  }
+                                  return null;
+                                },
+                                decoration: const InputDecoration(
+                                  hintText: 'Enter phone number',
+                                  hintStyle: TextStyle(
+                                    fontSize: 16,
+                                    color: Color(0xFF61758A),
+                                  ),
+                                  border: InputBorder.none,
+                                  contentPadding: EdgeInsets.all(16),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
 
                       // Vehicle Information Section
-                      _buildSectionTitle('Vehicle Information'),
-                      _buildTextField(
-                        controller: _vehicleNameController,
-                        label: 'Vehicle Name',
-                        hint: 'Enter vehicle name',
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please enter vehicle name';
-                          }
-                          return null;
-                        },
+                      const Padding(
+                        padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
+                        child: Text(
+                          'Vehicle Information',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF121417),
+                          ),
+                        ),
                       ),
-                      _buildTextField(
-                        controller: _plateNumberController,
-                        label: 'Plate Number',
-                        hint: 'Enter plate number',
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please enter plate number';
-                          }
-                          return null;
-                        },
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Padding(
+                              padding: EdgeInsets.only(bottom: 8),
+                              child: Text(
+                                'Vehicle Name',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w500,
+                                  color: Color(0xFF121417),
+                                ),
+                              ),
+                            ),
+                            Container(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(12),
+                                color: const Color(0xFFF0F2F5),
+                              ),
+                              child: TextFormField(
+                                controller: _vehicleNameController,
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Please enter vehicle name';
+                                  }
+                                  return null;
+                                },
+                                decoration: const InputDecoration(
+                                  hintText: 'Enter vehicle name',
+                                  hintStyle: TextStyle(
+                                    fontSize: 16,
+                                    color: Color(0xFF61758A),
+                                  ),
+                                  border: InputBorder.none,
+                                  contentPadding: EdgeInsets.all(16),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Padding(
+                              padding: EdgeInsets.only(bottom: 8),
+                              child: Text(
+                                'Plate Number',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w500,
+                                  color: Color(0xFF121417),
+                                ),
+                              ),
+                            ),
+                            Container(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(12),
+                                color: const Color(0xFFF0F2F5),
+                              ),
+                              child: TextFormField(
+                                controller: _plateNumberController,
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Please enter plate number';
+                                  }
+                                  return null;
+                                },
+                                decoration: const InputDecoration(
+                                  hintText: 'Enter plate number',
+                                  hintStyle: TextStyle(
+                                    fontSize: 16,
+                                    color: Color(0xFF61758A),
+                                  ),
+                                  border: InputBorder.none,
+                                  contentPadding: EdgeInsets.all(16),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
 
                       // Job Details Section
-                      _buildSectionTitle('Job Details'),
-                      _buildTextField(
-                        controller: _jobDescriptionController,
-                        label: 'Job Description',
-                        hint: 'Enter job description',
-                        maxLines: 3,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please enter job description';
-                          }
-                          return null;
-                        },
+                      const Padding(
+                        padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
+                        child: Text(
+                          'Job Details',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF121417),
+                          ),
+                        ),
                       ),
-                      _buildDropdownField(
-                        label: 'Requested Services',
-                        hint: 'Select services',
-                        selectedItems: selectedServices,
-                        onTap: _showServicesDialog,
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Padding(
+                              padding: EdgeInsets.only(bottom: 8),
+                              child: Text(
+                                'Job Description',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w500,
+                                  color: Color(0xFF121417),
+                                ),
+                              ),
+                            ),
+                            Container(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(12),
+                                color: const Color(0xFFF0F2F5),
+                              ),
+                              child: TextFormField(
+                                controller: _jobDescriptionController,
+                                maxLines: 3,
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Please enter job description';
+                                  }
+                                  return null;
+                                },
+                                decoration: const InputDecoration(
+                                  hintText: 'Enter job description',
+                                  hintStyle: TextStyle(
+                                    fontSize: 16,
+                                    color: Color(0xFF61758A),
+                                  ),
+                                  border: InputBorder.none,
+                                  contentPadding: EdgeInsets.all(16),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                      // Show selected services
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Padding(
+                              padding: EdgeInsets.only(bottom: 8),
+                              child: Text(
+                                'Requested Services',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w500,
+                                  color: Color(0xFF121417),
+                                ),
+                              ),
+                            ),
+                            GestureDetector(
+                              onTap: _showServicesDialog,
+                              child: Container(
+                                height: 56,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(12),
+                                  color: const Color(0xFFF0F2F5),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                                        child: Text(
+                                          selectedServices.isEmpty ? 'Select services' : selectedServices.join(', '),
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            color: selectedServices.isEmpty
+                                                ? const Color(0xFF61758A)
+                                                : const Color(0xFF121417),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    const Padding(
+                                      padding: EdgeInsets.only(right: 16),
+                                      child: Icon(
+                                        Icons.arrow_drop_down,
+                                        color: Color(0xFF61758A),
+                                        size: 24,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                       ...selectedServices.map(
-                        (service) => _buildSelectedItem(service),
+                        (service) => Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 40,
+                                height: 40,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(8),
+                                  color: const Color(0xFFF2F2F5),
+                                ),
+                                child: const Icon(Icons.check, color: Color(0xFF121417), size: 20),
+                              ),
+                              const SizedBox(width: 16),
+                              Text(
+                                service,
+                                style: const TextStyle(fontSize: 16, color: Color(0xFF121417)),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
-                      _buildDropdownField(
-                        label: 'Assigned Parts',
-                        hint: 'Select parts',
-                        selectedItems: selectedParts,
-                        onTap: _showPartsDialog,
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Padding(
+                              padding: EdgeInsets.only(bottom: 8),
+                              child: Text(
+                                'Assigned Parts',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w500,
+                                  color: Color(0xFF121417),
+                                ),
+                              ),
+                            ),
+                            GestureDetector(
+                              onTap: _showPartsDialog,
+                              child: Container(
+                                height: 56,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(12),
+                                  color: const Color(0xFFF0F2F5),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                                        child: Text(
+                                          selectedParts.isEmpty ? 'Select parts' : selectedParts.join(', '),
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            color: selectedParts.isEmpty
+                                                ? const Color(0xFF61758A)
+                                                : const Color(0xFF121417),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    const Padding(
+                                      padding: EdgeInsets.only(right: 16),
+                                      child: Icon(
+                                        Icons.arrow_drop_down,
+                                        color: Color(0xFF61758A),
+                                        size: 24,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                      // Show selected parts
-                      ...selectedParts.map((part) => _buildSelectedItem(part)),
+                      ...selectedParts.map((part) =>
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 40,
+                                  height: 40,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(8),
+                                    color: const Color(0xFFF2F2F5),
+                                  ),
+                                  child: const Icon(Icons.check, color: Color(0xFF121417), size: 20),
+                                ),
+                                const SizedBox(width: 16),
+                                Text(
+                                  part,
+                                  style: const TextStyle(fontSize: 16, color: Color(0xFF121417)),
+                                ),
+                              ],
+                            ),
+                          ),
+                      ),
 
                       // Remarks Section
-                      _buildSectionTitle('Remarks'),
-                      _buildTextField(
-                        controller: _remarksController,
-                        label: 'Add Note',
-                        hint: 'Enter additional notes',
-                        maxLines: 2,
+                      const Padding(
+                        padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
+                        child: Text(
+                          'Remarks',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF121417),
+                          ),
+                        ),
                       ),
-                      // Show existing remarks
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Padding(
+                              padding: EdgeInsets.only(bottom: 8),
+                              child: Text(
+                                'Add Note',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w500,
+                                  color: Color(0xFF121417),
+                                ),
+                              ),
+                            ),
+                            Container(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(12),
+                                color: const Color(0xFFF0F2F5),
+                              ),
+                              child: TextFormField(
+                                controller: _remarksController,
+                                maxLines: 2,
+                                decoration: const InputDecoration(
+                                  hintText: 'Enter additional notes',
+                                  hintStyle: TextStyle(
+                                    fontSize: 16,
+                                    color: Color(0xFF61758A),
+                                  ),
+                                  border: InputBorder.none,
+                                  contentPadding: EdgeInsets.all(16),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                       ...widget.jobDetails.remarks.map(
-                        (remark) => _buildRemarkItem(remark),
+                            (remark) => Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 48,
+                                height: 48,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(8),
+                                  color: const Color(0xFFF2F2F5),
+                                ),
+                                child: const Icon(Icons.note, color: Color(0xFF121417), size: 24),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      'Note 1',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w500,
+                                        color: Color(0xFF121417),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      remark,
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        color: Color(0xFF6B7582),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
-                      _buildActionButton(
-                        icon: Icons.photo_camera,
-                        label: 'Add Photo',
-                        onTap: () {
-                          // TODO: Implement photo functionality
-                        },
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                        child: Row(
+                          children: [
+                            GestureDetector(
+                              onTap: () {
+                                // TODO: Implement photo functionality
+                              },
+                              child: Container(
+                                width: 48,
+                                height: 48,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(8),
+                                  color: const Color(0xFFF2F2F5),
+                                ),
+                                child: const Icon(Icons.photo_camera, color: Color(0xFF121417), size: 24),
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            const Text(
+                              'Add Photo',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                                color: Color(0xFF121417),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),
@@ -350,302 +816,28 @@ class _EditJobPageState extends State<EditJobPage> {
               ),
 
               // Save Changes Button
-              _buildSaveChangesButton(),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHeader() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-      child: Row(
-        children: [
-          GestureDetector(
-            onTap: () => Navigator.pop(context),
-            child: Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(24),
-                color: const Color(0xFFF0F2F5),
-              ),
-              child: const Icon(
-                Icons.arrow_back,
-                color: Color(0xFF121417),
-                size: 24,
-              ),
-            ),
-          ),
-          const Expanded(
-            child: Text(
-              'Edit Job',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-                color: Color(0xFF121417),
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ),
-          const SizedBox(width: 48), // Spacer for centering
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSectionTitle(String title) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-      child: Align(
-        alignment: Alignment.centerLeft,
-        child: Text(
-          title,
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-            color: Color(0xFF121417),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTextField({
-    required TextEditingController controller,
-    required String label,
-    required String hint,
-    TextInputType? keyboardType,
-    int maxLines = 1,
-    String? Function(String?)? validator,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: Text(
-              label,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-                color: Color(0xFF121417),
-              ),
-            ),
-          ),
-          Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              color: const Color(0xFFF0F2F5),
-            ),
-            child: TextFormField(
-              controller: controller,
-              keyboardType: keyboardType,
-              maxLines: maxLines,
-              validator: validator,
-              decoration: InputDecoration(
-                hintText: hint,
-                hintStyle: const TextStyle(
-                  fontSize: 16,
-                  color: Color(0xFF61758A),
-                ),
-                border: InputBorder.none,
-                contentPadding: const EdgeInsets.all(16),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDropdownField({
-    required String label,
-    required String hint,
-    required List<String> selectedItems,
-    required VoidCallback onTap,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: Text(
-              label,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-                color: Color(0xFF121417),
-              ),
-            ),
-          ),
-          GestureDetector(
-            onTap: onTap,
-            child: Container(
-              height: 56,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                color: const Color(0xFFF0F2F5),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Text(
-                        selectedItems.isEmpty ? hint : selectedItems.join(', '),
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: selectedItems.isEmpty
-                              ? const Color(0xFF61758A)
-                              : const Color(0xFF121417),
-                        ),
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: ElevatedButton(
+                    onPressed: _saveChanges,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFDBE8F2),
+                      foregroundColor: const Color(0xFF121417),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                  ),
-                  const Padding(
-                    padding: EdgeInsets.only(right: 16),
-                    child: Icon(
-                      Icons.arrow_drop_down,
-                      color: Color(0xFF61758A),
-                      size: 24,
+                    child: const Text(
+                      'Save Changes',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
                     ),
                   ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSelectedItem(String item) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      child: Row(
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(8),
-              color: const Color(0xFFF2F2F5),
-            ),
-            child: const Icon(Icons.check, color: Color(0xFF121417), size: 20),
-          ),
-          const SizedBox(width: 16),
-          Text(
-            item,
-            style: const TextStyle(fontSize: 16, color: Color(0xFF121417)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildRemarkItem(String remark) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      child: Row(
-        children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(8),
-              color: const Color(0xFFF2F2F5),
-            ),
-            child: const Icon(Icons.note, color: Color(0xFF121417), size: 24),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Note 1',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                    color: Color(0xFF121417),
-                  ),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  remark,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: Color(0xFF6B7582),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildActionButton({
-    required IconData icon,
-    required String label,
-    required VoidCallback onTap,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      child: Row(
-        children: [
-          GestureDetector(
-            onTap: onTap,
-            child: Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(8),
-                color: const Color(0xFFF2F2F5),
               ),
-              child: Icon(icon, color: const Color(0xFF121417), size: 24),
-            ),
-          ),
-          const SizedBox(width: 16),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
-              color: Color(0xFF121417),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSaveChangesButton() {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: SizedBox(
-        width: double.infinity,
-        height: 48,
-        child: ElevatedButton(
-          onPressed: _saveChanges,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFFDBE8F2),
-            foregroundColor: const Color(0xFF121417),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
-          child: const Text(
-            'Save Changes',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+            ],
           ),
         ),
       ),

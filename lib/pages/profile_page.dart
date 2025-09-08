@@ -79,265 +79,362 @@ class _ProfilePageState extends State<ProfilePage> {
         child: Column(
           children: [
             // Header
-            _buildHeader(),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+              child: Row(
+                children: [
+                  const SizedBox(width: 48), // Spacer for centering
+                  const Expanded(
+                    child: Text(
+                      'Profile',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF121417),
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                  const SizedBox(width: 48), // Spacer for centering
+                ],
+              ),
+            ),
 
             // Profile Information
-            _buildProfileInfo(),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                children: [
+                  // Profile Picture
+                  Container(
+                    width: 128,
+                    height: 128,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(64),
+                      color: const Color(0xFFF0F2F5),
+                    ),
+                    child: const Icon(Icons.person, size: 64, color: Color(0xFF61758A)),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // User Name
+                  const Text(
+                    'Ethan Carter',
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF121417),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+
+                  // Role
+                  const Text(
+                    'Mechanic',
+                    style: TextStyle(fontSize: 16, color: Color(0xFF61758A)),
+                  ),
+                  const SizedBox(height: 4),
+
+                  // Email
+                  const Text(
+                    'ethan.carter@email.com',
+                    style: TextStyle(fontSize: 16, color: Color(0xFF61758A)),
+                  ),
+                ],
+              ),
+            ),
 
             // Account Section
-            _buildAccountSection(),
-
-            // Logout Button
-            _buildLogoutButton(),
-
-            const Spacer(),
-
-            // Bottom Navigation
-            _buildBottomNavigation(),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHeader() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-      child: Row(
-        children: [
-          const SizedBox(width: 48), // Spacer for centering
-          const Expanded(
-            child: Text(
-              'Profile',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-                color: Color(0xFF121417),
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ),
-          const SizedBox(width: 48), // Spacer for centering
-        ],
-      ),
-    );
-  }
-
-  Widget _buildProfileInfo() {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        children: [
-          // Profile Picture
-          Container(
-            width: 128,
-            height: 128,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(64),
-              color: const Color(0xFFF0F2F5),
-            ),
-            child: const Icon(Icons.person, size: 64, color: Color(0xFF61758A)),
-          ),
-          const SizedBox(height: 16),
-
-          // User Name
-          const Text(
-            'Ethan Carter',
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.w700,
-              color: Color(0xFF121417),
-            ),
-          ),
-          const SizedBox(height: 8),
-
-          // Role
-          const Text(
-            'Mechanic',
-            style: TextStyle(fontSize: 16, color: Color(0xFF61758A)),
-          ),
-          const SizedBox(height: 4),
-
-          // Email
-          const Text(
-            'ethan.carter@email.com',
-            style: TextStyle(fontSize: 16, color: Color(0xFF61758A)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAccountSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Account Title
-        const Padding(
-          padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
-          child: Text(
-            'Account',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-              color: Color(0xFF121417),
-            ),
-          ),
-        ),
-
-        // Phone Number
-        _buildAccountItem(
-          icon: Icons.phone,
-          title: 'Phone Number',
-          value: '+1 (555) 123-4567',
-        ),
-
-        // Email
-        _buildAccountItem(
-          icon: Icons.email,
-          title: 'Email',
-          value: 'ethan.carter@email.com',
-        ),
-      ],
-    );
-  }
-
-  Widget _buildAccountItem({
-    required IconData icon,
-    required String title,
-    required String value,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Row(
-        children: [
-          // Icon
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(8),
-              color: const Color(0xFFF0F2F5),
-            ),
-            child: Icon(icon, color: const Color(0xFF121417), size: 24),
-          ),
-
-          const SizedBox(width: 16),
-
-          // Content
-          Expanded(
-            child: Column(
+            Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                    color: Color(0xFF121417),
+                // Account Title
+                const Padding(
+                  padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
+                  child: Text(
+                    'Account',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF121417),
+                    ),
                   ),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  value,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: Color(0xFF61758A),
+
+                // Phone Number
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: Row(
+                    children: [
+                      // Icon
+                      Container(
+                        width: 48,
+                        height: 48,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(8),
+                          color: const Color(0xFFF0F2F5),
+                        ),
+                        child: const Icon(Icons.phone, color: Color(0xFF121417), size: 24),
+                      ),
+
+                      const SizedBox(width: 16),
+
+                      // Content
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: const [
+                            Text(
+                              'Phone Number',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                                color: Color(0xFF121417),
+                              ),
+                            ),
+                            SizedBox(height: 4),
+                            Text(
+                              '+1 (555) 123-4567',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Color(0xFF61758A),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Email
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: Row(
+                    children: [
+                      // Icon
+                      Container(
+                        width: 48,
+                        height: 48,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(8),
+                          color: const Color(0xFFF0F2F5),
+                        ),
+                        child: const Icon(Icons.email, color: Color(0xFF121417), size: 24),
+                      ),
+
+                      const SizedBox(width: 16),
+
+                      // Content
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: const [
+                            Text(
+                              'Email',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                                color: Color(0xFF121417),
+                              ),
+                            ),
+                            SizedBox(height: 4),
+                            Text(
+                              'ethan.carter@email.com',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Color(0xFF61758A),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
             ),
-          ),
-        ],
-      ),
-    );
-  }
 
-  Widget _buildLogoutButton() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: GestureDetector(
-        onTap: _showLogoutDialog,
-        child: Container(
-          width: double.infinity,
-          height: 40,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            color: const Color(0xFFF0F2F5),
-          ),
-          child: const Center(
-            child: Text(
-              'Logout',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-                color: Color(0xFF121417),
+            // Logout Button
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: GestureDetector(
+                onTap: _showLogoutDialog,
+                child: Container(
+                  width: double.infinity,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    color: const Color(0xFFF0F2F5),
+                  ),
+                  child: const Center(
+                    child: Text(
+                      'Logout',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF121417),
+                      ),
+                    ),
+                  ),
+                ),
               ),
             ),
-          ),
-        ),
-      ),
-    );
-  }
 
-  Widget _buildBottomNavigation() {
-    return Container(
-      decoration: const BoxDecoration(
-        border: Border(top: BorderSide(color: Color(0xFFF0F2F5), width: 1)),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            _buildNavItem(0, Icons.dashboard, 'Dashboard', false),
-            _buildNavItem(1, Icons.work, 'Manage Jobs', false),
-            _buildNavItem(2, Icons.history, 'History', false),
-            _buildNavItem(3, Icons.person, 'Profile', true),
+            const Spacer(),
+
+            // Bottom Navigation
+            Container(
+              decoration: const BoxDecoration(
+                border: Border(top: BorderSide(color: Color(0xFFF0F2F5), width: 1)),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    GestureDetector(
+                      onTap: () => _onItemTapped(0),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 32,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(16),
+                              color: _selectedIndex == 0 ? const Color(0xFFF0F2F5) : Colors.transparent,
+                            ),
+                            child: Icon(
+                              Icons.dashboard,
+                              size: 24,
+                              color: _selectedIndex == 0
+                                  ? const Color(0xFF121417)
+                                  : const Color(0xFF61758A),
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Dashboard',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: _selectedIndex == 0
+                                  ? const Color(0xFF121417)
+                                  : const Color(0xFF61758A),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: () => _onItemTapped(1),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 32,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(16),
+                              color: _selectedIndex == 1 ? const Color(0xFFF0F2F5) : Colors.transparent,
+                            ),
+                            child: Icon(
+                              Icons.work,
+                              size: 24,
+                              color: _selectedIndex == 1
+                                  ? const Color(0xFF121417)
+                                  : const Color(0xFF61758A),
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Manage Jobs',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: _selectedIndex == 1
+                                  ? const Color(0xFF121417)
+                                  : const Color(0xFF61758A),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: () => _onItemTapped(2),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 32,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(16),
+                              color: _selectedIndex == 2 ? const Color(0xFFF0F2F5) : Colors.transparent,
+                            ),
+                            child: Icon(
+                              Icons.history,
+                              size: 24,
+                              color: _selectedIndex == 2
+                                  ? const Color(0xFF121417)
+                                  : const Color(0xFF61758A),
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'History',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: _selectedIndex == 2
+                                  ? const Color(0xFF121417)
+                                  : const Color(0xFF61758A),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: () => _onItemTapped(3),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 32,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(16),
+                              color: _selectedIndex == 3 ? const Color(0xFFF0F2F5) : Colors.transparent,
+                            ),
+                            child: Icon(
+                              Icons.person,
+                              size: 24,
+                              color: _selectedIndex == 3
+                                  ? const Color(0xFF121417)
+                                  : const Color(0xFF61758A),
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Profile',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: _selectedIndex == 3
+                                  ? const Color(0xFF121417)
+                                  : const Color(0xFF61758A),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildNavItem(
-    int index,
-    IconData icon,
-    String label,
-    bool isSelected,
-  ) {
-    return GestureDetector(
-      onTap: () => _onItemTapped(index),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              color: isSelected ? const Color(0xFFF0F2F5) : Colors.transparent,
-            ),
-            child: Icon(
-              icon,
-              size: 24,
-              color: isSelected
-                  ? const Color(0xFF121417)
-                  : const Color(0xFF61758A),
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              color: isSelected
-                  ? const Color(0xFF121417)
-                  : const Color(0xFF61758A),
-            ),
-          ),
-        ],
       ),
     );
   }

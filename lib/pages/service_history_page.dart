@@ -6,6 +6,7 @@ import 'dashboard_page.dart';
 import 'job_management_page.dart';
 import 'service_history_details_page.dart';
 import 'profile_page.dart';
+import '../models/service_history_item.dart';
 
 class ServiceHistoryPage extends StatefulWidget {
   const ServiceHistoryPage({super.key});
@@ -241,307 +242,372 @@ class _ServiceHistoryPageState extends State<ServiceHistoryPage> {
 
   @override
   Widget build(BuildContext context) {
+    final items = filteredItems;
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
         child: Column(
           children: [
             // Header
-            _buildHeader(),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+              child: Row(
+                children: [
+                  const Expanded(
+                    child: Text(
+                      'Service History',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF121417),
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                  const SizedBox(width: 48), // Spacer for centering
+                ],
+              ),
+            ),
 
             // Search Bar
-            _buildSearchBar(),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Container(
+                height: 48,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  color: const Color(0xFFF0F2F5),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 48,
+                      height: 48,
+                      decoration: const BoxDecoration(
+                        borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(12),
+                          bottomLeft: Radius.circular(12),
+                        ),
+                        color: Color(0xFFF0F2F5),
+                      ),
+                      child: const Icon(
+                        Icons.search,
+                        color: Color(0xFF61758A),
+                        size: 24,
+                      ),
+                    ),
+                    Expanded(
+                      child: TextField(
+                        controller: _searchController,
+                        onChanged: (value) {
+                          setState(() {});
+                        },
+                        decoration: const InputDecoration(
+                          hintText: 'Search',
+                          hintStyle: TextStyle(fontSize: 16, color: Color(0xFF61758A)),
+                          border: InputBorder.none,
+                          contentPadding: EdgeInsets.symmetric(horizontal: 16),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
 
             // Filter Button
-            _buildFilterButton(),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Row(
+                children: [
+                  GestureDetector(
+                    onTap: _showFilterDialog,
+                    child: Container(
+                      height: 32,
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(16),
+                        color: const Color(0xFFF0F2F5),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Text(
+                            'Filter',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: Color(0xFF121417),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          const Icon(
+                            Icons.filter_list,
+                            size: 20,
+                            color: Color(0xFF121417),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
 
             // Service History List
-            Expanded(child: _buildServiceHistoryList()),
+            Expanded(
+              child: items.isEmpty
+                  ? const Center(
+                      child: Text(
+                        'No service history found',
+                        style: TextStyle(fontSize: 16, color: Color(0xFF61758A)),
+                      ),
+                    )
+                  : ListView.builder(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      itemCount: items.length,
+                      itemBuilder: (context, index) {
+                        final item = items[index];
+                        return GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    ServiceHistoryDetailsPage(serviceHistoryItem: item),
+                              ),
+                            );
+                          },
+                          child: Container(
+                            margin: const EdgeInsets.only(bottom: 8),
+                            child: Row(
+                              children: [
+                                // Service Icon
+                                Container(
+                                  width: 48,
+                                  height: 48,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(8),
+                                    color: const Color(0xFFF0F2F5),
+                                  ),
+                                  child: const Icon(
+                                    Icons.build,
+                                    color: Color(0xFF121417),
+                                    size: 24,
+                                  ),
+                                ),
+
+                                const SizedBox(width: 16),
+
+                                // Service Details
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        item.plateNumber,
+                                        style: const TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w500,
+                                          color: Color(0xFF121417),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        item.customerName,
+                                        style: const TextStyle(
+                                          fontSize: 14,
+                                          color: Color(0xFF61758A),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        '${item.serviceType} • ${_formatDate(item.serviceDate)}',
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          color: Color(0xFF61758A),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+
+                                // Status
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(12),
+                                    color: const Color(0xFF4CAF50).withOpacity(0.1),
+                                  ),
+                                  child: Text(
+                                    item.status,
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w500,
+                                      color: Color(0xFF4CAF50),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+            ),
 
             // Bottom Navigation
-            _buildBottomNavigation(),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHeader() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-      child: Row(
-        children: [
-          const Expanded(
-            child: Text(
-              'Service History',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-                color: Color(0xFF121417),
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ),
-          const SizedBox(width: 48), // Spacer for centering
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSearchBar() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: Container(
-        height: 48,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          color: const Color(0xFFF0F2F5),
-        ),
-        child: Row(
-          children: [
             Container(
-              width: 48,
-              height: 48,
               decoration: const BoxDecoration(
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(12),
-                  bottomLeft: Radius.circular(12),
-                ),
-                color: Color(0xFFF0F2F5),
+                border: Border(top: BorderSide(color: Color(0xFFF0F2F5), width: 1)),
               ),
-              child: const Icon(
-                Icons.search,
-                color: Color(0xFF61758A),
-                size: 24,
-              ),
-            ),
-            Expanded(
-              child: TextField(
-                controller: _searchController,
-                onChanged: (value) {
-                  setState(() {});
-                },
-                decoration: const InputDecoration(
-                  hintText: 'Search',
-                  hintStyle: TextStyle(fontSize: 16, color: Color(0xFF61758A)),
-                  border: InputBorder.none,
-                  contentPadding: EdgeInsets.symmetric(horizontal: 16),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFilterButton() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: Row(
-        children: [
-          GestureDetector(
-            onTap: _showFilterDialog,
-            child: Container(
-              height: 32,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16),
-                color: const Color(0xFFF0F2F5),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text(
-                    'Filter',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: Color(0xFF121417),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    GestureDetector(
+                      onTap: () => _onItemTapped(0),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 32,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(16),
+                              color: _selectedIndex == 0 ? const Color(0xFFF0F2F5) : Colors.transparent,
+                            ),
+                            child: Icon(
+                              Icons.dashboard,
+                              size: 24,
+                              color: _selectedIndex == 0
+                                  ? const Color(0xFF121417)
+                                  : const Color(0xFF61758A),
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Dashboard',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: _selectedIndex == 0
+                                  ? const Color(0xFF121417)
+                                  : const Color(0xFF61758A),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  const Icon(
-                    Icons.filter_list,
-                    size: 20,
-                    color: Color(0xFF121417),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildServiceHistoryList() {
-    final items = filteredItems;
-
-    if (items.isEmpty) {
-      return const Center(
-        child: Text(
-          'No service history found',
-          style: TextStyle(fontSize: 16, color: Color(0xFF61758A)),
-        ),
-      );
-    }
-
-    return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      itemCount: items.length,
-      itemBuilder: (context, index) {
-        final item = items[index];
-        return _buildServiceHistoryCard(item);
-      },
-    );
-  }
-
-  Widget _buildServiceHistoryCard(ServiceHistoryItem item) {
-    return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) =>
-                ServiceHistoryDetailsPage(serviceHistoryItem: item),
-          ),
-        );
-      },
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 8),
-        child: Row(
-          children: [
-            // Service Icon
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(8),
-                color: const Color(0xFFF0F2F5),
-              ),
-              child: const Icon(
-                Icons.build,
-                color: Color(0xFF121417),
-                size: 24,
-              ),
-            ),
-
-            const SizedBox(width: 16),
-
-            // Service Details
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    item.plateNumber,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                      color: Color(0xFF121417),
+                    GestureDetector(
+                      onTap: () => _onItemTapped(1),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 32,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(16),
+                              color: _selectedIndex == 1 ? const Color(0xFFF0F2F5) : Colors.transparent,
+                            ),
+                            child: Icon(
+                              Icons.work,
+                              size: 24,
+                              color: _selectedIndex == 1
+                                  ? const Color(0xFF121417)
+                                  : const Color(0xFF61758A),
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Manage Jobs',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: _selectedIndex == 1
+                                  ? const Color(0xFF121417)
+                                  : const Color(0xFF61758A),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    item.customerName,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: Color(0xFF61758A),
+                    GestureDetector(
+                      onTap: () => _onItemTapped(2),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 32,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(16),
+                              color: _selectedIndex == 2 ? const Color(0xFFF0F2F5) : Colors.transparent,
+                            ),
+                            child: Icon(
+                              Icons.history,
+                              size: 24,
+                              color: _selectedIndex == 2
+                                  ? const Color(0xFF121417)
+                                  : const Color(0xFF61758A),
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'History',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: _selectedIndex == 2
+                                  ? const Color(0xFF121417)
+                                  : const Color(0xFF61758A),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '${item.serviceType} • ${_formatDate(item.serviceDate)}',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: Color(0xFF61758A),
+                    GestureDetector(
+                      onTap: () => _onItemTapped(3),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 32,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(16),
+                              color: _selectedIndex == 3 ? const Color(0xFFF0F2F5) : Colors.transparent,
+                            ),
+                            child: Icon(
+                              Icons.person,
+                              size: 24,
+                              color: _selectedIndex == 3
+                                  ? const Color(0xFF121417)
+                                  : const Color(0xFF61758A),
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Profile',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: _selectedIndex == 3
+                                  ? const Color(0xFF121417)
+                                  : const Color(0xFF61758A),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
-              ),
-            ),
-
-            // Status
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                color: const Color(0xFF4CAF50).withOpacity(0.1),
-              ),
-              child: Text(
-                item.status,
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                  color: Color(0xFF4CAF50),
+                  ],
                 ),
               ),
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildBottomNavigation() {
-    return Container(
-      decoration: const BoxDecoration(
-        border: Border(top: BorderSide(color: Color(0xFFF0F2F5), width: 1)),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            _buildNavItem(0, Icons.dashboard, 'Dashboard', false),
-            _buildNavItem(1, Icons.work, 'Manage Jobs', false),
-            _buildNavItem(2, Icons.history, 'History', true),
-            _buildNavItem(3, Icons.person, 'Profile', false),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildNavItem(
-    int index,
-    IconData icon,
-    String label,
-    bool isSelected,
-  ) {
-    return GestureDetector(
-      onTap: () => _onItemTapped(index),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              color: isSelected ? const Color(0xFFF0F2F5) : Colors.transparent,
-            ),
-            child: Icon(
-              icon,
-              size: 24,
-              color: isSelected
-                  ? const Color(0xFF121417)
-                  : const Color(0xFF61758A),
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              color: isSelected
-                  ? const Color(0xFF121417)
-                  : const Color(0xFF61758A),
-            ),
-          ),
-        ],
       ),
     );
   }
