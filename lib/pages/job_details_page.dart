@@ -1,17 +1,11 @@
 import 'package:flutter/material.dart';
 import '../models/job_details.dart';
-import 'edit_job_page.dart';
 
-class JobDetailsPage extends StatefulWidget {
+class JobDetailsPage extends StatelessWidget {
   final JobDetails jobDetails;
 
   const JobDetailsPage({super.key, required this.jobDetails});
 
-  @override
-  State<JobDetailsPage> createState() => _JobDetailsPageState();
-}
-
-class _JobDetailsPageState extends State<JobDetailsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -52,30 +46,6 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
                       ),
                     ),
                   ),
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) =>
-                              EditJobPage(jobDetails: widget.jobDetails),
-                        ),
-                      );
-                    },
-                    child: Container(
-                      width: 48,
-                      height: 48,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(24),
-                        color: const Color(0xFFF0F2F5),
-                      ),
-                      child: const Icon(
-                        Icons.edit,
-                        color: Color(0xFF121417),
-                        size: 24,
-                      ),
-                    ),
-                  ),
                 ],
               ),
             ),
@@ -113,11 +83,11 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
                               borderRadius: BorderRadius.circular(28),
                               color: const Color(0xFFF2F2F5),
                             ),
-                            child: widget.jobDetails.customerImage != null
+                            child: jobDetails.customerImage != null
                                 ? ClipRRect(
                                     borderRadius: BorderRadius.circular(28),
                                     child: Image.asset(
-                                      widget.jobDetails.customerImage!,
+                                      jobDetails.customerImage!,
                                       fit: BoxFit.cover,
                                     ),
                                   )
@@ -134,7 +104,7 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  widget.jobDetails.customerName,
+                                  jobDetails.customerName,
                                   style: const TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w500,
@@ -143,7 +113,7 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  widget.jobDetails.customerPhone,
+                                  jobDetails.customerPhone,
                                   style: const TextStyle(
                                     fontSize: 14,
                                     color: Color(0xFF6B7582),
@@ -194,7 +164,7 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  widget.jobDetails.vehicle,
+                                  jobDetails.vehicle,
                                   style: const TextStyle(
                                     fontSize: 14,
                                     color: Color(0xFF6B7582),
@@ -225,14 +195,14 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            widget.jobDetails.status,
+                            jobDetails.status,
                             style: const TextStyle(
                               fontSize: 16,
                               color: Color(0xFF121417),
                             ),
                           ),
                           Text(
-                            widget.jobDetails.timeElapsed,
+                            jobDetails.timeElapsed,
                             style: const TextStyle(
                               fontSize: 16,
                               color: Color(0xFF121417),
@@ -257,7 +227,7 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
                     Padding(
                       padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
                       child: Text(
-                        widget.jobDetails.jobDescription,
+                        jobDetails.jobDescription,
                         style: const TextStyle(
                           fontSize: 16,
                           color: Color(0xFF121417),
@@ -277,7 +247,7 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
                         ),
                       ),
                     ),
-                    ...widget.jobDetails.requestedServices.map(
+                    ...jobDetails.requestedServices.map(
                       (service) => Padding(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 16,
@@ -327,7 +297,7 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
                         ),
                       ),
                     ),
-                    ...widget.jobDetails.assignedParts.map(
+                    ...jobDetails.assignedParts.map(
                       (part) => Padding(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 16,
@@ -377,7 +347,7 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
                         ),
                       ),
                     ),
-                    ...widget.jobDetails.remarks.asMap().entries.map(
+                    ...jobDetails.remarks.asMap().entries.map(
                       (entry) => Padding(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 16,

@@ -1,12 +1,7 @@
 import 'package:flutter/material.dart';
-import '../models/job.dart';
-import '../models/job_details.dart';
-import 'job_details_page.dart';
-import 'dashboard_page.dart';
-import 'job_management_page.dart';
-import 'service_history_details_page.dart';
-import 'profile_page.dart';
 import '../models/service_history_item.dart';
+import '../widgets/bottom_navigation_bar.dart';
+import 'service_history_details_page.dart';
 
 class ServiceHistoryPage extends StatefulWidget {
   const ServiceHistoryPage({super.key});
@@ -206,34 +201,6 @@ class _ServiceHistoryPageState extends State<ServiceHistoryPage> {
     );
   }
 
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-
-    if (index == 0) {
-      // Navigate to Dashboard page
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const DashboardPage()),
-      );
-    } else if (index == 1) {
-      // Navigate to Job Management page
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const JobManagementPage()),
-      );
-    } else if (index == 3) {
-      // Navigate to Profile page
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const ProfilePage()),
-      );
-    }
-  }
-
-  int _selectedIndex = 2; // History tab is selected
-
   @override
   void dispose() {
     _searchController.dispose();
@@ -304,7 +271,10 @@ class _ServiceHistoryPageState extends State<ServiceHistoryPage> {
                         },
                         decoration: const InputDecoration(
                           hintText: 'Search',
-                          hintStyle: TextStyle(fontSize: 16, color: Color(0xFF61758A)),
+                          hintStyle: TextStyle(
+                            fontSize: 16,
+                            color: Color(0xFF61758A),
+                          ),
                           border: InputBorder.none,
                           contentPadding: EdgeInsets.symmetric(horizontal: 16),
                         ),
@@ -360,7 +330,10 @@ class _ServiceHistoryPageState extends State<ServiceHistoryPage> {
                   ? const Center(
                       child: Text(
                         'No service history found',
-                        style: TextStyle(fontSize: 16, color: Color(0xFF61758A)),
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Color(0xFF61758A),
+                        ),
                       ),
                     )
                   : ListView.builder(
@@ -373,8 +346,9 @@ class _ServiceHistoryPageState extends State<ServiceHistoryPage> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) =>
-                                    ServiceHistoryDetailsPage(serviceHistoryItem: item),
+                                builder: (context) => ServiceHistoryDetailsPage(
+                                  serviceHistoryItem: item,
+                                ),
                               ),
                             );
                           },
@@ -402,7 +376,8 @@ class _ServiceHistoryPageState extends State<ServiceHistoryPage> {
                                 // Service Details
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         item.plateNumber,
@@ -434,10 +409,15 @@ class _ServiceHistoryPageState extends State<ServiceHistoryPage> {
 
                                 // Status
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 4,
+                                  ),
                                   decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(12),
-                                    color: const Color(0xFF4CAF50).withOpacity(0.1),
+                                    color: const Color(
+                                      0xFF4CAF50,
+                                    ).withOpacity(0.1),
                                   ),
                                   child: Text(
                                     item.status,
@@ -455,160 +435,10 @@ class _ServiceHistoryPageState extends State<ServiceHistoryPage> {
                       },
                     ),
             ),
-
-            // Bottom Navigation
-            Container(
-              decoration: const BoxDecoration(
-                border: Border(top: BorderSide(color: Color(0xFFF0F2F5), width: 1)),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    GestureDetector(
-                      onTap: () => _onItemTapped(0),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            width: 32,
-                            height: 32,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(16),
-                              color: _selectedIndex == 0 ? const Color(0xFFF0F2F5) : Colors.transparent,
-                            ),
-                            child: Icon(
-                              Icons.dashboard,
-                              size: 24,
-                              color: _selectedIndex == 0
-                                  ? const Color(0xFF121417)
-                                  : const Color(0xFF61758A),
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Dashboard',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                              color: _selectedIndex == 0
-                                  ? const Color(0xFF121417)
-                                  : const Color(0xFF61758A),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    GestureDetector(
-                      onTap: () => _onItemTapped(1),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            width: 32,
-                            height: 32,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(16),
-                              color: _selectedIndex == 1 ? const Color(0xFFF0F2F5) : Colors.transparent,
-                            ),
-                            child: Icon(
-                              Icons.work,
-                              size: 24,
-                              color: _selectedIndex == 1
-                                  ? const Color(0xFF121417)
-                                  : const Color(0xFF61758A),
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Manage Jobs',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                              color: _selectedIndex == 1
-                                  ? const Color(0xFF121417)
-                                  : const Color(0xFF61758A),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    GestureDetector(
-                      onTap: () => _onItemTapped(2),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            width: 32,
-                            height: 32,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(16),
-                              color: _selectedIndex == 2 ? const Color(0xFFF0F2F5) : Colors.transparent,
-                            ),
-                            child: Icon(
-                              Icons.history,
-                              size: 24,
-                              color: _selectedIndex == 2
-                                  ? const Color(0xFF121417)
-                                  : const Color(0xFF61758A),
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'History',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                              color: _selectedIndex == 2
-                                  ? const Color(0xFF121417)
-                                  : const Color(0xFF61758A),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    GestureDetector(
-                      onTap: () => _onItemTapped(3),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            width: 32,
-                            height: 32,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(16),
-                              color: _selectedIndex == 3 ? const Color(0xFFF0F2F5) : Colors.transparent,
-                            ),
-                            child: Icon(
-                              Icons.person,
-                              size: 24,
-                              color: _selectedIndex == 3
-                                  ? const Color(0xFF121417)
-                                  : const Color(0xFF61758A),
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Profile',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                              color: _selectedIndex == 3
-                                  ? const Color(0xFF121417)
-                                  : const Color(0xFF61758A),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
           ],
         ),
       ),
+      bottomNavigationBar: const AppBottomNavigationBar(selectedIndex: 1),
     );
   }
 
