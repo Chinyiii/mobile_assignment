@@ -154,9 +154,9 @@ class JobDetailsPage extends StatelessWidget {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text(
-                                  'Vehicle',
-                                  style: TextStyle(
+                                Text(
+                                  jobDetails.plateNumber,
+                                  style: const TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w500,
                                     color: Color(0xFF121417),

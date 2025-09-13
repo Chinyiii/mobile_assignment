@@ -28,6 +28,7 @@ class SupabaseService {
         customerName: job['users']['name'],
         customerPhone: job['users']['phone_number'],
         vehicle: job['vehicles']['vehicle_name'],
+        plateNumber: job['vehicles']['plate_number'],
         jobDescription: job['job_description'],
         requestedServices: (job['job_services'] as List)
             .map((js) => js['services']['service_name'] as String)
