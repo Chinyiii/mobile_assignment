@@ -80,7 +80,13 @@ class _DashboardPageState extends State<DashboardPage> {
                               builder: (context) =>
                                   JobDetailsPage(jobDetails: job),
                             ),
-                          );
+                          ).then((result) {
+                            if (result == true) {
+                              setState(() {
+                                _jobDetailsFuture = SupabaseService().getJobDetails();
+                              });
+                            }
+                          });
                         },
                         child: Container(
                           margin: const EdgeInsets.only(bottom: 8),

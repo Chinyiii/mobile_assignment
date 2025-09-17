@@ -26,4 +26,12 @@ class JobDetails {
     required this.timeElapsed,
     this.customerImage,
   });
+
+  static String calculateTimeElapsed(String? startTime, String? endTime) {
+    if (startTime == null) return "0m";
+    final start = DateTime.parse(startTime);
+    final end = endTime != null ? DateTime.parse(endTime) : DateTime.now();
+    final diff = end.difference(start);
+    return "${diff.inHours}h ${diff.inMinutes % 60}m";
+  }
 }

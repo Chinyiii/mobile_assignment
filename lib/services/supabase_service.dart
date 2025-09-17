@@ -40,7 +40,7 @@ class SupabaseService {
             .map((r) => r['text'] as String)
             .toList(),
         status: job['status'],
-        timeElapsed: _calculateTimeElapsed(job['start_time'], job['end_time']),
+        timeElapsed: JobDetails.calculateTimeElapsed(job['start_time'], job['end_time']),
         customerImage: null, // ❌ no such field in DB
       ));
     }
@@ -48,11 +48,10 @@ class SupabaseService {
     return jobDetailsList;
   }
 
-  String _calculateTimeElapsed(String? startTime, String? endTime) {
-    if (startTime == null) return "0m";
-    final start = DateTime.parse(startTime);
-    final end = endTime != null ? DateTime.parse(endTime) : DateTime.now();
-    final diff = end.difference(start);
-    return "${diff.inHours}h ${diff.inMinutes % 60}m";
+  Future<void> updateJobStatus(String jobId, String status) async {
+    await supabase
+        .from('jobs')
+        .update({'status': status})
+        .eq('job_id', jobId);
   }
 }
