@@ -1,8 +1,4 @@
-enum JobStatus {
-  assigned,
-  inProgress,
-  completed,
-}
+enum JobStatus { assigned, inProgress, completed }
 
 class Job {
   final String id;

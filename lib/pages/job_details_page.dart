@@ -127,7 +127,8 @@ class _VehicleServiceHistorySection extends StatefulWidget {
       _VehicleServiceHistorySectionState();
 }
 
-class _VehicleServiceHistorySectionState extends State<_VehicleServiceHistorySection> {
+class _VehicleServiceHistorySectionState
+    extends State<_VehicleServiceHistorySection> {
   late Future<List<ServiceHistoryItem>> _serviceHistoryFuture;
 
   @override

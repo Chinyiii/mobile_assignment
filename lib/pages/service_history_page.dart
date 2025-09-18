@@ -191,7 +191,7 @@ class _ServiceHistoryPageState extends State<ServiceHistoryPage> {
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop();
-                this.setState(() {});
+                setState(() {});
               },
               child: const Text('Apply'),
             ),
@@ -417,7 +417,7 @@ class _ServiceHistoryPageState extends State<ServiceHistoryPage> {
                                     borderRadius: BorderRadius.circular(12),
                                     color: const Color(
                                       0xFF4CAF50,
-                                    ).withOpacity(0.1),
+                                    ).withAlpha(26),
                                   ),
                                   child: Text(
                                     item.status,

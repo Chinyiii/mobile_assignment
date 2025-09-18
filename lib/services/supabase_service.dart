@@ -6,9 +6,7 @@ final supabase = Supabase.instance.client;
 
 class SupabaseService {
   Future<List<JobDetails>> getJobDetails() async {
-    final response = await supabase
-        .from('jobs')
-        .select('''
+    final response = await supabase.from('jobs').select('''
           job_id,
           job_description,
           status,
@@ -24,36 +22,44 @@ class SupabaseService {
 
     final List<JobDetails> jobDetailsList = [];
     for (final job in response) {
-      jobDetailsList.add(JobDetails(
-        id: job['job_id'].toString(),
-        customerName: job['users']['name'],
-        customerPhone: job['users']['phone_number'],
-        vehicle: job['vehicles']['vehicle_name'],
-        plateNumber: job['vehicles']['plate_number'],
-        jobDescription: job['job_description'],
-        requestedServices: (job['job_services'] as List?)
-            ?.map((js) => js['services']['service_name'] as String)
-            .toList() ?? [],
-        assignedParts: (job['job_parts'] as List?)
-            ?.map((jp) => jp['parts']['part_name'] as String)
-            .toList() ?? [],
-        remarks: (job['remarks'] as List?)
-            ?.map((r) => r['text'] as String)
-            .toList() ?? [],
-        status: job['status'],
-        timeElapsed: JobDetails.calculateTimeElapsed(job['start_time'], job['end_time']),
-        customerImage: null, // ❌ no such field in DB
-      ));
+      jobDetailsList.add(
+        JobDetails(
+          id: job['job_id'].toString(),
+          customerName: job['users']['name'],
+          customerPhone: job['users']['phone_number'],
+          vehicle: job['vehicles']['vehicle_name'],
+          plateNumber: job['vehicles']['plate_number'],
+          jobDescription: job['job_description'],
+          requestedServices:
+              (job['job_services'] as List?)
+                  ?.map((js) => js['services']['service_name'] as String)
+                  .toList() ??
+              [],
+          assignedParts:
+              (job['job_parts'] as List?)
+                  ?.map((jp) => jp['parts']['part_name'] as String)
+                  .toList() ??
+              [],
+          remarks:
+              (job['remarks'] as List?)
+                  ?.map((r) => r['text'] as String)
+                  .toList() ??
+              [],
+          status: job['status'],
+          timeElapsed: JobDetails.calculateTimeElapsed(
+            job['start_time'],
+            job['end_time'],
+          ),
+          customerImage: null, // ❌ no such field in DB
+        ),
+      );
     }
 
     return jobDetailsList;
   }
 
   Future<void> updateJobStatus(String jobId, String status) async {
-    await supabase
-        .from('jobs')
-        .update({'status': status})
-        .eq('job_id', jobId);
+    await supabase.from('jobs').update({'status': status}).eq('job_id', jobId);
   }
 
   Future<List<ServiceHistoryItem>> getServiceHistory(String plateNumber) async {
@@ -63,7 +69,7 @@ class SupabaseService {
           .from('vehicles')
           .select('vehicle_id')
           .eq('plate_number', plateNumber)
-          .single();
+          .maybeSingle();
 
       if (vehicleResponse == null) {
         return []; // No vehicle found with this plate number.
@@ -94,36 +100,49 @@ class SupabaseService {
       for (final historyItem in historyResponse) {
         final job = historyItem['jobs'];
         if (job != null) {
-          serviceHistoryList.add(ServiceHistoryItem(
-            id: job['job_id'].toString(),
-            customerName: job['users']['name'],
-            customerPhone: job['users']['phone_number'],
-            vehicle: job['vehicles']['vehicle_name'],
-            plateNumber: job['vehicles']['plate_number'],
-            jobDescription: job['job_description'],
-            requestedServices: (job['job_services'] as List?)
-                ?.map((js) => js['services']['service_name'] as String)
-                .toList() ?? [],
-            assignedParts: (job['job_parts'] as List?)
-                ?.map((jp) => jp['parts']['part_name'] as String)
-                .toList() ?? [],
-            remarks: (job['remarks'] as List?)
-                ?.map((r) => r['text'] as String)
-                .toList() ?? [],
-            status: job['status'],
-            serviceDate: DateTime.parse(historyItem['service_date']),
-            serviceType: (job['job_services'] as List?)
-                ?.map((js) => js['services']['service_name'] as String)
-                .join(', ') ?? '',
-            timeElapsed: JobDetails.calculateTimeElapsed(job['start_time'], job['end_time']),
-            photos: [], // Photos are in a separate table, not directly linked here.
-          ));
+          serviceHistoryList.add(
+            ServiceHistoryItem(
+              id: job['job_id'].toString(),
+              customerName: job['users']['name'],
+              customerPhone: job['users']['phone_number'],
+              vehicle: job['vehicles']['vehicle_name'],
+              plateNumber: job['vehicles']['plate_number'],
+              jobDescription: job['job_description'],
+              requestedServices:
+                  (job['job_services'] as List?)
+                      ?.map((js) => js['services']['service_name'] as String)
+                      .toList() ??
+                  [],
+              assignedParts:
+                  (job['job_parts'] as List?)
+                      ?.map((jp) => jp['parts']['part_name'] as String)
+                      .toList() ??
+                  [],
+              remarks:
+                  (job['remarks'] as List?)
+                      ?.map((r) => r['text'] as String)
+                      .toList() ??
+                  [],
+              status: job['status'],
+              serviceDate: DateTime.parse(historyItem['service_date']),
+              serviceType:
+                  (job['job_services'] as List?)
+                      ?.map((js) => js['services']['service_name'] as String)
+                      .join(', ') ??
+                  '',
+              timeElapsed: JobDetails.calculateTimeElapsed(
+                job['start_time'],
+                job['end_time'],
+              ),
+              photos:
+                  [], // Photos are in a separate table, not directly linked here.
+            ),
+          );
         }
       }
 
       return serviceHistoryList;
     } catch (e) {
-      print('Error fetching service history: $e');
       throw Exception('Failed to load service history');
     }
   }

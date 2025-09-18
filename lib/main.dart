@@ -7,7 +7,8 @@ void main() async {
 
   await Supabase.initialize(
     url: 'https://uehfxybntoeblhnjtynb.supabase.co',
-    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVlaGZ4eWJudG9lYmxobmp0eW5iIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MjQ5MTAsImV4cCI6MjA3MzAwMDkxMH0.tB49dyoK9Sse0MjwmcF-1lATPuDhSRGnvoiHVER5RWw',
+    anonKey:
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVlaGZ4eWJudG9lYmxobmp0eW5iIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MjQ5MTAsImV4cCI6MjA3MzAwMDkxMH0.tB49dyoK9Sse0MjwmcF-1lATPuDhSRGnvoiHVER5RWw',
   );
 
   runApp(const MyApp());
@@ -26,7 +27,6 @@ class MyApp extends StatelessWidget {
         fontFamily: 'Inter',
       ),
       home: const DashboardPage(),
-
     );
   }
 }
