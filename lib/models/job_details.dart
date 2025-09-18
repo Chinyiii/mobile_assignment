@@ -1,3 +1,5 @@
+import 'package:mobile_assignment/models/service_task.dart';
+
 class JobDetails {
   final String id;
   final String customerName;
@@ -5,12 +7,11 @@ class JobDetails {
   final String vehicle;
   final String plateNumber;
   final String jobDescription;
-  final List<String> requestedServices;
+  final List<ServiceTask> requestedServices;
   final List<String> assignedParts;
   final List<String> remarks;
   final String status;
   final String timeElapsed;
-  final String? customerImage;
   final DateTime createdAt;
 
   JobDetails({
@@ -26,7 +27,6 @@ class JobDetails {
     required this.status,
     required this.timeElapsed,
     required this.createdAt,
-    this.customerImage,
   });
 
   static String calculateTimeElapsed(String? startTime, String? endTime) {
@@ -35,5 +35,24 @@ class JobDetails {
     final end = endTime != null ? DateTime.parse(endTime) : DateTime.now();
     final diff = end.difference(start);
     return "${diff.inHours}h ${diff.inMinutes % 60}m";
+  }
+
+  factory JobDetails.fromJson(Map<String, dynamic> json) {
+    return JobDetails(
+      id: json['id'],
+      customerName: json['customer_name'],
+      customerPhone: json['customer_phone'],
+      vehicle: json['vehicle'],
+      plateNumber: json['plate_number'],
+      jobDescription: json['job_description'],
+      requestedServices: (json['requested_services'] as List<dynamic>)
+          .map((e) => ServiceTask.fromJson(e))
+          .toList(),
+      assignedParts: List<String>.from(json['assigned_parts']),
+      remarks: List<String>.from(json['remarks']),
+      status: json['status'],
+      timeElapsed: json['time_elapsed'],
+      createdAt: DateTime.parse(json['created_at']),
+    );
   }
 }

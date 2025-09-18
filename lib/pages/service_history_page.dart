@@ -76,7 +76,8 @@ class _ServiceHistoryPageState extends State<ServiceHistoryPage> {
     // Apply service filter
     if (selectedService != null) {
       items = items.where((item) {
-        return item.requestedServices.contains(selectedService);
+        // Check if any task in the list has a matching service name
+        return item.requestedServices.any((task) => task.serviceName == selectedService);
       }).toList();
     }
 
@@ -465,11 +466,11 @@ class _ServiceHistoryPageState extends State<ServiceHistoryPage> {
                         customerPhone: job.customerPhone,
                         vehicle: job.vehicle,
                         serviceDate: job.createdAt,
-                        serviceType: job.requestedServices.join(', '),
+                        serviceType: job.requestedServices.map((task) => task.serviceName).join(', '),
                         status: job.status,
                         timeElapsed: job.timeElapsed,
                         jobDescription: job.jobDescription,
-                        requestedServices: job.requestedServices,
+                        requestedServices: job.requestedServices.map((task) => task.serviceName).toList(),
                         assignedParts: job.assignedParts,
                         remarks: job.remarks,
                         photos: [], // Not available in JobDetails
@@ -580,7 +581,10 @@ class _ServiceHistoryPageState extends State<ServiceHistoryPage> {
 
   String _formatDate(DateTime date) {
     final now = DateTime.now();
-    final difference = now.difference(date).inDays;
+    // Create dates with the time set to midnight to compare calendar days
+    final today = DateTime(now.year, now.month, now.day);
+    final otherDate = DateTime(date.year, date.month, date.day);
+    final difference = today.difference(otherDate).inDays;
 
     if (difference == 0) {
       return 'Today';
