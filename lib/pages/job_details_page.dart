@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_assignment/models/job_details.dart';
+import 'package:mobile_assignment/models/service_history_item.dart';
+import 'package:mobile_assignment/pages/service_history_details_page.dart';
 import 'package:mobile_assignment/services/supabase_service.dart';
 
 class JobDetailsPage extends StatefulWidget {
@@ -99,6 +101,9 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
                     _RequestedServicesSection(jobDetails: _jobDetails),
                     _AssignedPartsSection(jobDetails: _jobDetails),
                     _RemarksSection(jobDetails: _jobDetails),
+                    _VehicleServiceHistorySection(
+                      plateNumber: _jobDetails.plateNumber,
+                    ),
                     const SizedBox(height: 20),
                   ],
                 ),
@@ -109,6 +114,149 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
         ),
       ),
     );
+  }
+}
+
+class _VehicleServiceHistorySection extends StatefulWidget {
+  final String plateNumber;
+
+  const _VehicleServiceHistorySection({required this.plateNumber});
+
+  @override
+  State<_VehicleServiceHistorySection> createState() =>
+      _VehicleServiceHistorySectionState();
+}
+
+class _VehicleServiceHistorySectionState extends State<_VehicleServiceHistorySection> {
+  late Future<List<ServiceHistoryItem>> _serviceHistoryFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _serviceHistoryFuture = SupabaseService().getServiceHistory(
+      widget.plateNumber,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Padding(
+          padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
+          child: Text(
+            'Vehicle Service History',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF121417),
+            ),
+          ),
+        ),
+        FutureBuilder<List<ServiceHistoryItem>>(
+          future: _serviceHistoryFuture,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            if (snapshot.hasError) {
+              return const Center(child: Text('Error loading service history'));
+            }
+            final serviceHistory = snapshot.data;
+            if (serviceHistory == null || serviceHistory.isEmpty) {
+              return const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Text(
+                  'No service history for this vehicle.',
+                  style: TextStyle(fontSize: 14, color: Color(0xFF6B7582)),
+                ),
+              );
+            }
+            return Column(
+              children: serviceHistory.map((item) {
+                return GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            ServiceHistoryDetailsPage(serviceHistoryItem: item),
+                      ),
+                    );
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 48,
+                          height: 48,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(8),
+                            color: const Color(0xFFF2F2F5),
+                          ),
+                          child: const Icon(
+                            Icons.build,
+                            color: Color(0xFF121417),
+                            size: 24,
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                item.serviceType,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w500,
+                                  color: Color(0xFF121417),
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                _formatDate(item.serviceDate),
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  color: Color(0xFF6B7582),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }).toList(),
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  String _formatDate(DateTime date) {
+    final now = DateTime.now();
+    final difference = now.difference(date).inDays;
+
+    if (difference == 0) {
+      return 'Today';
+    } else if (difference == 1) {
+      return 'Yesterday';
+    } else if (difference < 7) {
+      return '$difference days ago';
+    } else if (difference < 30) {
+      final weeks = (difference / 7).floor();
+      return '$weeks weeks ago';
+    } else {
+      return '${date.day}/${date.month}/${date.year}';
+    }
   }
 }
 
@@ -179,10 +327,7 @@ class _CustomerSection extends StatelessWidget {
           ),
         ),
         Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 8,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           child: Row(
             children: [
               Container(
@@ -246,10 +391,7 @@ class _VehicleSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 16,
-        vertical: 8,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         children: [
           Container(
@@ -323,17 +465,11 @@ class _JobStatusSection extends StatelessWidget {
             children: [
               Text(
                 jobDetails.status,
-                style: const TextStyle(
-                  fontSize: 16,
-                  color: Color(0xFF121417),
-                ),
+                style: const TextStyle(fontSize: 16, color: Color(0xFF121417)),
               ),
               Text(
                 jobDetails.timeElapsed,
-                style: const TextStyle(
-                  fontSize: 16,
-                  color: Color(0xFF121417),
-                ),
+                style: const TextStyle(fontSize: 16, color: Color(0xFF121417)),
               ),
             ],
           ),
@@ -368,10 +504,7 @@ class _JobDescriptionSection extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
           child: Text(
             jobDetails.jobDescription,
-            style: const TextStyle(
-              fontSize: 16,
-              color: Color(0xFF121417),
-            ),
+            style: const TextStyle(fontSize: 16, color: Color(0xFF121417)),
           ),
         ),
       ],
@@ -402,10 +535,7 @@ class _RequestedServicesSection extends StatelessWidget {
         ),
         ...jobDetails.requestedServices.map(
           (service) => Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 4,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
             child: Row(
               children: [
                 Container(
@@ -463,10 +593,7 @@ class _AssignedPartsSection extends StatelessWidget {
         ),
         ...jobDetails.assignedParts.map(
           (part) => Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 4,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
             child: Row(
               children: [
                 Container(
@@ -524,10 +651,7 @@ class _RemarksSection extends StatelessWidget {
         ),
         ...jobDetails.remarks.asMap().entries.map(
           (entry) => Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 8,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Row(
               children: [
                 Container(
