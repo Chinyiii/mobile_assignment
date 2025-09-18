@@ -18,6 +18,11 @@ class JobDetailsPage extends StatefulWidget {
 class _JobDetailsPageState extends State<JobDetailsPage> {
   late JobDetails _jobDetails;
   late Future<List<ServiceHistoryItem>> _serviceHistoryFuture;
+  bool _isUpdating = false;
+
+  // Helper getter to check if all tasks are completed
+  bool get _areAllTasksCompleted =>
+      _jobDetails.requestedServices.every((task) => task.status == 'Completed');
 
   @override
   void initState() {
@@ -27,35 +32,172 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
         SupabaseService().getServiceHistory(_jobDetails.plateNumber);
   }
 
-  void _showChangeStatusDialog() {
+  // --- Task Action Handlers ---
+
+  Future<void> _startTask(ServiceTask task) async {
+    setState(() => _isUpdating = true);
+    try {
+      final now = DateTime.now();
+      DateTime? startTime = task.startTime; // Keep original start time if it exists
+      if (startTime == null) {
+        startTime = now; // Set start time if it's the first time
+      }
+
+      await SupabaseService().updateTaskStatus(
+        task.taskId.toString(),
+        'In Progress',
+        startTime: startTime,
+        sessionStartTime: now, // Always set session start time on play
+      );
+      await _refreshJobDetails();
+    } catch (e) {
+      _showErrorSnackBar('Failed to start task: ${e.toString()}');
+    } finally {
+      if(mounted) setState(() => _isUpdating = false);
+    }
+  }
+
+  Future<void> _pauseTask(ServiceTask task) async {
+    setState(() => _isUpdating = true);
+    try {
+      // Calculate the elapsed time for this session
+      final sessionDuration = task.sessionStartTime != null ? DateTime.now().difference(task.sessionStartTime!) : Duration.zero;
+      final newTotalDuration = Duration(seconds: task.duration) + sessionDuration;
+
+      await SupabaseService().updateTaskStatus(
+        task.taskId.toString(),
+        'Paused',
+        duration: newTotalDuration,
+        sessionStartTime: null, // Clear session start time on pause
+      );
+      await _refreshJobDetails();
+    } catch (e) {
+      _showErrorSnackBar('Failed to pause task: ${e.toString()}');
+    } finally {
+      if(mounted) setState(() => _isUpdating = false);
+    }
+  }
+
+  Future<void> _completeTask(ServiceTask task) async {
+    setState(() => _isUpdating = true);
+    try {
+      Duration finalDuration = Duration(seconds: task.duration);
+      if (task.status == 'In Progress' && task.sessionStartTime != null) {
+        final sessionDuration = DateTime.now().difference(task.sessionStartTime!);
+        finalDuration += sessionDuration;
+      }
+
+      await SupabaseService().updateTaskStatus(
+        task.taskId.toString(),
+        'Completed',
+        endTime: DateTime.now(),
+        duration: finalDuration,
+        sessionStartTime: null,
+      );
+      await _refreshJobDetails();
+    } catch (e) {
+      _showErrorSnackBar('Failed to complete task: ${e.toString()}');
+    } finally {
+      if(mounted) setState(() => _isUpdating = false);
+    }
+  }
+
+  // --- General UI and Status Logic ---
+
+  void _showSuccessSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: Colors.green),
+    );
+  }
+
+  void _showErrorSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: Colors.red),
+    );
+  }
+
+  Future<void> _refreshJobDetails() async {
+    try {
+      final freshJobDetails = await SupabaseService().getSingleJobDetails(_jobDetails.id);
+      if (mounted) {
+        setState(() {
+          _jobDetails = freshJobDetails;
+        });
+      }
+    } catch (e) {
+      _showErrorSnackBar('Failed to refresh job details.');
+    }
+  }
+
+  void _showCancelConfirmationDialog() {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        Widget buildStatusRadioListTile(String status) {
-          return RadioListTile<String>(
-            title: Text(status),
-            value: status,
-            groupValue: _jobDetails.status,
-            onChanged: (String? value) {
-              if (value != null) {
-                _updateStatus(value);
-              }
-              Navigator.of(context).pop();
-            },
-          );
-        }
-
         return AlertDialog(
-          title: const Text('Change Status'),
+          title: const Text('Cancel Job'),
+          content: const Text('Are you sure you want to cancel this job?'),
+          actions: [
+            TextButton(
+              child: const Text('No'),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+            TextButton(
+              child: const Text('Yes, Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop(); // Close confirmation dialog
+                _updateStatus('Cancelled');
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showChangeStatusDialog() {
+    const Map<String, List<String>> statusTransitions = {
+      'Pending': ['In Progress', 'Cancelled'],
+      'In Progress': ['On Hold', 'Completed', 'Cancelled'],
+      'On Hold': ['In Progress', 'Cancelled'],
+    };
+
+    final currentStatus = _jobDetails.status;
+    final availableTransitions = statusTransitions[currentStatus] ?? [];
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Change Status To'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
-            children: [
-              buildStatusRadioListTile('Assigned'),
-              buildStatusRadioListTile('In Progress'),
-              buildStatusRadioListTile('On Hold'),
-              buildStatusRadioListTile('Completed'),
-              buildStatusRadioListTile('Cancelled'),
-            ],
+            children: availableTransitions.isEmpty
+                ? [const Text('No further actions available.')]
+                : availableTransitions.map((nextStatus) {
+                    bool isEnabled = true;
+                    String title = nextStatus;
+
+                    if (nextStatus == 'Completed' && !_areAllTasksCompleted) {
+                      isEnabled = false;
+                      title = 'Completed (Finish all tasks first)';
+                    }
+
+                    return ListTile(
+                      title: Text(title,
+                          style: TextStyle(
+                              color: isEnabled ? Colors.black : Colors.grey)),
+                      onTap: isEnabled
+                          ? () {
+                              Navigator.of(context).pop();
+                              if (nextStatus == 'Cancelled') {
+                                _showCancelConfirmationDialog();
+                              } else {
+                                _updateStatus(nextStatus);
+                              }
+                            }
+                          : null,
+                    );
+                  }).toList(),
           ),
         );
       },
@@ -63,26 +205,31 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
   }
 
   Future<void> _updateStatus(String newStatus) async {
+    setState(() {
+      _isUpdating = true;
+    });
+
     try {
+      if (newStatus == 'On Hold') {
+        final tasksToPause = _jobDetails.requestedServices
+            .where((task) => task.status == 'In Progress');
+        for (final task in tasksToPause) {
+          await _pauseTask(task); // Use the new handler
+        }
+      }
+
       await SupabaseService().updateJobStatus(_jobDetails.id, newStatus);
-      setState(() {
-        _jobDetails = JobDetails(
-          id: _jobDetails.id,
-          customerName: _jobDetails.customerName,
-          customerPhone: _jobDetails.customerPhone,
-          vehicle: _jobDetails.vehicle,
-          plateNumber: _jobDetails.plateNumber,
-          jobDescription: _jobDetails.jobDescription,
-          requestedServices: _jobDetails.requestedServices,
-          assignedParts: _jobDetails.assignedParts,
-          remarks: _jobDetails.remarks,
-          status: newStatus,
-          timeElapsed: _jobDetails.timeElapsed,
-          createdAt: _jobDetails.createdAt,
-        );
-      });
+      await _refreshJobDetails();
+      _showSuccessSnackBar('Status updated to $newStatus');
+
     } catch (e) {
-      // Handle error
+      _showErrorSnackBar('Error updating status: ${e.toString()}');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isUpdating = false;
+        });
+      }
     }
   }
 
@@ -108,31 +255,42 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Column(
-          children: [
-            _buildJobDetailsHeader(),
-            Expanded(
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildCustomerSection(),
-                    _buildVehicleSection(),
-                    _buildJobStatusSection(),
-                    _buildJobDescriptionSection(),
-                    _buildRequestedServicesSection(),
-                    _buildAssignedPartsSection(),
-                    _buildRemarksSection(),
-                    _buildVehicleServiceHistorySection(),
-                    const SizedBox(height: 20),
-                  ],
+      body: Stack(
+        children: [
+          SafeArea(
+            child: Column(
+              children: [
+                _buildJobDetailsHeader(),
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildCustomerSection(),
+                        _buildVehicleSection(),
+                        _buildJobStatusSection(),
+                        _buildJobDescriptionSection(),
+                        _buildRequestedServicesSection(),
+                        _buildAssignedPartsSection(),
+                        _buildRemarksSection(),
+                        _buildVehicleServiceHistorySection(),
+                        const SizedBox(height: 20),
+                      ],
+                    ),
+                  ),
                 ),
+                _buildActionButtons(),
+              ],
+            ),
+          ),
+          if (_isUpdating)
+            Container(
+              color: Colors.black.withOpacity(0.5),
+              child: const Center(
+                child: CircularProgressIndicator(),
               ),
             ),
-            _buildActionButtons(),
-          ],
-        ),
+        ],
       ),
     );
   }
@@ -170,6 +328,7 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
               ),
             ),
           ),
+          const SizedBox(width: 48),
         ],
       ),
     );
@@ -362,7 +521,13 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
           ),
         ),
         ..._jobDetails.requestedServices.map(
-              (service) => ServiceTaskWidget(task: service),
+          (task) => ServiceTaskWidget(
+            task: task,
+            isUpdating: _isUpdating,
+            onStart: () => _startTask(task),
+            onPause: () => _pauseTask(task),
+            onComplete: () => _completeTask(task),
+          ),
         ),
       ],
     );
@@ -587,6 +752,11 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
   }
 
   Widget _buildActionButtons() {
+    // Hide button if job is in a terminal state
+    if (_jobDetails.status == 'Completed' || _jobDetails.status == 'Cancelled') {
+      return const SizedBox.shrink(); // Return an empty widget
+    }
+
     return Container(
       padding: const EdgeInsets.all(16),
       child: Row(
