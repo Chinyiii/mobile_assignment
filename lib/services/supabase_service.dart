@@ -50,6 +50,66 @@ class SupabaseService {
             job['start_time'],
             job['end_time'],
           ),
+          createdAt: DateTime.parse(job['created_at']),
+          customerImage: null, // ❌ no such field in DB
+        ),
+      );
+    }
+
+    return jobDetailsList;
+  }
+
+  Future<List<JobDetails>> getCompletedJobs() async {
+    final userId = 2; // Bypass auth for now
+    final response = await supabase
+        .from('jobs')
+        .select('''
+          job_id,
+          job_description,
+          status,
+          start_time,
+          end_time,
+          created_at,
+          users:customer_id ( name, phone_number ),
+          vehicles:vehicle_id ( vehicle_name, plate_number ),
+          job_services ( services:service_id ( service_name ) ),
+          job_parts ( parts:part_id ( part_name ) ),
+          remarks ( text, created_at )
+        ''')
+        .eq('mechanic_id', userId)
+        .eq('status', 'Completed');
+
+    final List<JobDetails> jobDetailsList = [];
+    for (final job in response) {
+      jobDetailsList.add(
+        JobDetails(
+          id: job['job_id'].toString(),
+          customerName: job['users']['name'],
+          customerPhone: job['users']['phone_number'],
+          vehicle: job['vehicles']['vehicle_name'],
+          plateNumber: job['vehicles']['plate_number'],
+          jobDescription: job['job_description'],
+          requestedServices:
+              (job['job_services'] as List?)
+                  ?.map((js) => js['services']['service_name'] as String)
+                  .toList() ??
+              [],
+          assignedParts:
+              (job['job_parts'] as List?)
+                  ?.map((jp) => jp['parts']['part_name'] as String)
+                  .toList() ??
+              [],
+          remarks:
+              (job['remarks'] as List?)
+                  ?.map((r) => r['text'] as String)
+                  .toList() ??
+              [],
+          status: job['status'],
+          timeElapsed: JobDetails.calculateTimeElapsed(
+            job['start_time'],
+            job['end_time'],
+          ),
+          createdAt: DateTime.parse(job['created_at']),
           customerImage: null, // ❌ no such field in DB
         ),
       );
@@ -60,6 +120,16 @@ class SupabaseService {
 
   Future<void> updateJobStatus(String jobId, String status) async {
     await supabase.from('jobs').update({'status': status}).eq('job_id', jobId);
+  }
+
+  Future<List<String>> getAllServices() async {
+    final response = await supabase.from('services').select('service_name');
+    return (response as List).map((row) => row['service_name'] as String).toList();
+  }
+
+  Future<List<String>> getAllParts() async {
+    final response = await supabase.from('parts').select('part_name');
+    return (response as List).map((row) => row['part_name'] as String).toList();
   }
 
   Future<List<ServiceHistoryItem>> getServiceHistory(String plateNumber) async {

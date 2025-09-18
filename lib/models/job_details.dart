@@ -11,6 +11,7 @@ class JobDetails {
   final String status;
   final String timeElapsed;
   final String? customerImage;
+  final DateTime createdAt;
 
   JobDetails({
     required this.id,
@@ -24,6 +25,7 @@ class JobDetails {
     required this.remarks,
     required this.status,
     required this.timeElapsed,
+    required this.createdAt,
     this.customerImage,
   });
 

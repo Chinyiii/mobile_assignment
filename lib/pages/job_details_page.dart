@@ -74,6 +74,7 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
           status: newStatus,
           timeElapsed: _jobDetails.timeElapsed,
           customerImage: _jobDetails.customerImage,
+          createdAt: _jobDetails.createdAt,
         );
       });
     } catch (e) {
