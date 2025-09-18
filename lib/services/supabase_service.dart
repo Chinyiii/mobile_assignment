@@ -88,18 +88,27 @@ class SupabaseService {
     final response = await supabase
         .from('jobs')
         .select('''
-          job_id,
-          job_description,
-          status,
-          start_time,
-          end_time,
-          created_at,
-          users:customer_id ( name, phone_number ),
-          vehicles:vehicle_id ( vehicle_name, plate_number ),
-          job_services ( services:service_id ( service_name ) ),
-          job_parts ( parts:part_id ( part_name ) ),
-          remarks ( text, created_at )
-        ''')
+            job_id,
+            job_description,
+            status,
+            start_time,
+            end_time,
+            created_at,
+            users:customer_id ( name, phone_number ),
+            vehicles:vehicle_id ( vehicle_name, plate_number ),
+            job_tasks (
+              task_id,
+              service_id,
+              status,
+              duration,
+              start_time,
+              end_time,
+              session_start_time,
+              services:service_id ( service_name )
+            ),
+            job_parts ( parts:part_id ( part_name ) ),
+            remarks ( text, created_at )
+          ''')
         .eq('mechanic_id', userId)
         .eq('status', 'Completed');
 
