@@ -51,7 +51,12 @@ class AppBottomNavigationBar extends StatelessWidget {
     );
   }
 
-  Widget _buildNavItem(BuildContext context, int index, IconData icon, String label) {
+  Widget _buildNavItem(
+    BuildContext context,
+    int index,
+    IconData icon,
+    String label,
+  ) {
     final bool isSelected = selectedIndex == index;
     return GestureDetector(
       onTap: () => _onItemTapped(index, context),
@@ -68,7 +73,9 @@ class AppBottomNavigationBar extends StatelessWidget {
             child: Icon(
               icon,
               size: 24,
-              color: isSelected ? const Color(0xFF121417) : const Color(0xFF61758A),
+              color: isSelected
+                  ? const Color(0xFF121417)
+                  : const Color(0xFF61758A),
             ),
           ),
           const SizedBox(height: 4),
@@ -77,7 +84,9 @@ class AppBottomNavigationBar extends StatelessWidget {
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w500,
-              color: isSelected ? const Color(0xFF121417) : const Color(0xFF61758A),
+              color: isSelected
+                  ? const Color(0xFF121417)
+                  : const Color(0xFF61758A),
             ),
           ),
         ],

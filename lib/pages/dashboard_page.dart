@@ -80,7 +80,14 @@ class _DashboardPageState extends State<DashboardPage> {
                               builder: (context) =>
                                   JobDetailsPage(jobDetails: job),
                             ),
-                          );
+                          ).then((result) {
+                            if (result == true) {
+                              setState(() {
+                                _jobDetailsFuture = SupabaseService()
+                                    .getJobDetails();
+                              });
+                            }
+                          });
                         },
                         child: Container(
                           margin: const EdgeInsets.only(bottom: 8),
@@ -136,7 +143,9 @@ class _DashboardPageState extends State<DashboardPage> {
                                 ),
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(16),
-                                  color: _getStatusColor(job.status).withOpacity(0.1),
+                                  color: _getStatusColor(
+                                    job.status,
+                                  ).withAlpha(26),
                                 ),
                                 child: Text(
                                   job.status,

@@ -78,7 +78,10 @@ class _ServiceHistoryDetailsPageState extends State<ServiceHistoryDetailsPage> {
                       ),
                     ),
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
                       child: Row(
                         children: [
                           // Customer Avatar
@@ -89,7 +92,11 @@ class _ServiceHistoryDetailsPageState extends State<ServiceHistoryDetailsPage> {
                               borderRadius: BorderRadius.circular(28),
                               color: const Color(0xFFF2F2F5),
                             ),
-                            child: const Icon(Icons.person, size: 28, color: Color(0xFF6B7582)),
+                            child: const Icon(
+                              Icons.person,
+                              size: 28,
+                              color: Color(0xFF6B7582),
+                            ),
                           ),
 
                           const SizedBox(width: 16),
@@ -124,7 +131,10 @@ class _ServiceHistoryDetailsPageState extends State<ServiceHistoryDetailsPage> {
 
                     // Vehicle Section
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
                       child: Row(
                         children: [
                           // Vehicle Icon
@@ -191,11 +201,17 @@ class _ServiceHistoryDetailsPageState extends State<ServiceHistoryDetailsPage> {
                         children: [
                           Text(
                             widget.serviceHistoryItem.status,
-                            style: const TextStyle(fontSize: 16, color: Color(0xFF121417)),
+                            style: const TextStyle(
+                              fontSize: 16,
+                              color: Color(0xFF121417),
+                            ),
                           ),
                           Text(
                             widget.serviceHistoryItem.timeElapsed,
-                            style: const TextStyle(fontSize: 16, color: Color(0xFF121417)),
+                            style: const TextStyle(
+                              fontSize: 16,
+                              color: Color(0xFF121417),
+                            ),
                           ),
                         ],
                       ),
@@ -219,8 +235,13 @@ class _ServiceHistoryDetailsPageState extends State<ServiceHistoryDetailsPage> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            _formatServiceDate(widget.serviceHistoryItem.serviceDate),
-                            style: const TextStyle(fontSize: 16, color: Color(0xFF121417)),
+                            _formatServiceDate(
+                              widget.serviceHistoryItem.serviceDate,
+                            ),
+                            style: const TextStyle(
+                              fontSize: 16,
+                              color: Color(0xFF121417),
+                            ),
                           ),
                           const SizedBox(width: 16), // Spacer for alignment
                         ],
@@ -243,7 +264,10 @@ class _ServiceHistoryDetailsPageState extends State<ServiceHistoryDetailsPage> {
                       padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
                       child: Text(
                         widget.serviceHistoryItem.jobDescription,
-                        style: const TextStyle(fontSize: 16, color: Color(0xFF121417)),
+                        style: const TextStyle(
+                          fontSize: 16,
+                          color: Color(0xFF121417),
+                        ),
                       ),
                     ),
 
@@ -261,7 +285,10 @@ class _ServiceHistoryDetailsPageState extends State<ServiceHistoryDetailsPage> {
                     ),
                     ...widget.serviceHistoryItem.requestedServices.map(
                       (service) => Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 4,
+                        ),
                         child: Row(
                           children: [
                             // Service Icon
@@ -272,7 +299,11 @@ class _ServiceHistoryDetailsPageState extends State<ServiceHistoryDetailsPage> {
                                 borderRadius: BorderRadius.circular(8),
                                 color: const Color(0xFFF2F2F5),
                               ),
-                              child: const Icon(Icons.build, color: Color(0xFF121417), size: 20),
+                              child: const Icon(
+                                Icons.build,
+                                color: Color(0xFF121417),
+                                size: 20,
+                              ),
                             ),
 
                             const SizedBox(width: 16),
@@ -281,7 +312,10 @@ class _ServiceHistoryDetailsPageState extends State<ServiceHistoryDetailsPage> {
                             Expanded(
                               child: Text(
                                 service,
-                                style: const TextStyle(fontSize: 16, color: Color(0xFF121417)),
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  color: Color(0xFF121417),
+                                ),
                               ),
                             ),
                           ],
@@ -303,7 +337,10 @@ class _ServiceHistoryDetailsPageState extends State<ServiceHistoryDetailsPage> {
                     ),
                     ...widget.serviceHistoryItem.assignedParts.map(
                       (part) => Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 4,
+                        ),
                         child: Row(
                           children: [
                             // Part Icon
@@ -327,7 +364,10 @@ class _ServiceHistoryDetailsPageState extends State<ServiceHistoryDetailsPage> {
                             Expanded(
                               child: Text(
                                 part,
-                                style: const TextStyle(fontSize: 16, color: Color(0xFF121417)),
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  color: Color(0xFF121417),
+                                ),
                               ),
                             ),
                           ],
@@ -349,7 +389,10 @@ class _ServiceHistoryDetailsPageState extends State<ServiceHistoryDetailsPage> {
                     ),
                     ...widget.serviceHistoryItem.remarks.asMap().entries.map(
                       (entry) => Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
                         child: Row(
                           children: [
                             // Remark Icon
@@ -360,7 +403,11 @@ class _ServiceHistoryDetailsPageState extends State<ServiceHistoryDetailsPage> {
                                 borderRadius: BorderRadius.circular(8),
                                 color: const Color(0xFFF2F2F5),
                               ),
-                              child: const Icon(Icons.note, color: Color(0xFF121417), size: 24),
+                              child: const Icon(
+                                Icons.note,
+                                color: Color(0xFF121417),
+                                size: 24,
+                              ),
                             ),
 
                             const SizedBox(width: 16),
@@ -409,7 +456,10 @@ class _ServiceHistoryDetailsPageState extends State<ServiceHistoryDetailsPage> {
                       ),
                       ...widget.serviceHistoryItem.photos.asMap().entries.map(
                         (entry) => Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
                           child: Row(
                             children: [
                               // Photo Icon
@@ -420,7 +470,11 @@ class _ServiceHistoryDetailsPageState extends State<ServiceHistoryDetailsPage> {
                                   borderRadius: BorderRadius.circular(8),
                                   color: const Color(0xFFF2F2F5),
                                 ),
-                                child: const Icon(Icons.photo, color: Color(0xFF121417), size: 24),
+                                child: const Icon(
+                                  Icons.photo,
+                                  color: Color(0xFF121417),
+                                  size: 24,
+                                ),
                               ),
 
                               const SizedBox(width: 16),

@@ -3,6 +3,7 @@ class JobDetails {
   final String customerName;
   final String customerPhone;
   final String vehicle;
+  final String plateNumber;
   final String jobDescription;
   final List<String> requestedServices;
   final List<String> assignedParts;
@@ -16,6 +17,7 @@ class JobDetails {
     required this.customerName,
     required this.customerPhone,
     required this.vehicle,
+    required this.plateNumber,
     required this.jobDescription,
     required this.requestedServices,
     required this.assignedParts,
@@ -24,4 +26,12 @@ class JobDetails {
     required this.timeElapsed,
     this.customerImage,
   });
+
+  static String calculateTimeElapsed(String? startTime, String? endTime) {
+    if (startTime == null) return "0m";
+    final start = DateTime.parse(startTime);
+    final end = endTime != null ? DateTime.parse(endTime) : DateTime.now();
+    final diff = end.difference(start);
+    return "${diff.inHours}h ${diff.inMinutes % 60}m";
+  }
 }
