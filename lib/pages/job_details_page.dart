@@ -527,10 +527,6 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
                 _jobDetails.status,
                 style: const TextStyle(fontSize: 16, color: Color(0xFF121417)),
               ),
-              Text(
-                _jobDetails.timeElapsed,
-                style: const TextStyle(fontSize: 16, color: Color(0xFF121417)),
-              ),
             ],
           ),
         ),
