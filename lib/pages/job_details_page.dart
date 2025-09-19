@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:mobile_assignment/models/job_details.dart';
 import 'package:mobile_assignment/models/service_history_item.dart';
@@ -21,6 +22,7 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
   late Future<List<ServiceHistoryItem>> _serviceHistoryFuture;
   bool _isUpdating = false;
   bool _showSignature = false;
+  StreamSubscription? _jobSubscription;
 
   // Helper getter to check if all tasks are completed
   bool get _areAllTasksCompleted =>
@@ -32,6 +34,28 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
     _jobDetails = widget.jobDetails;
     _serviceHistoryFuture = SupabaseService().getServiceHistory(
       _jobDetails.plateNumber,
+    );
+    _subscribeToJobUpdates();
+  }
+
+  @override
+  void dispose() {
+    _jobSubscription?.cancel();
+    super.dispose();
+  }
+
+  void _subscribeToJobUpdates() {
+    _jobSubscription = SupabaseService().getJobStream(_jobDetails.id).listen(
+      (data) {
+        if (mounted) {
+          print('Real-time update received for job ${_jobDetails.id}');
+          _refreshJobDetails();
+        }
+      },
+      onError: (e) {
+        print('Error in real-time subscription: $e');
+        _showErrorSnackBar('Connection to real-time updates failed.');
+      },
     );
   }
 

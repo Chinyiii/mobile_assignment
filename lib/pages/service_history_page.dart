@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../models/service_history_item.dart';
 import '../widgets/bottom_navigation_bar.dart';
@@ -18,22 +19,63 @@ class _ServiceHistoryPageState extends State<ServiceHistoryPage> {
   final List<String> filters = ['All', 'This Week', 'This Month', 'This Year'];
   final TextEditingController _searchController = TextEditingController();
 
-  late final Future<List<dynamic>> _dataFuture;
   final SupabaseService _supabaseService = SupabaseService();
 
   String? selectedService;
   String? selectedPart;
   List<String> allServices = [];
   List<String> allParts = [];
+  List<JobDetails> _completedJobs = [];
+
+  StreamSubscription? _jobsSubscription;
+  StreamSubscription? _servicesSubscription;
+  StreamSubscription? _partsSubscription;
 
   @override
   void initState() {
     super.initState();
-    _dataFuture = Future.wait([
-      _supabaseService.getCompletedJobs(),
-      _supabaseService.getAllServices(),
-      _supabaseService.getAllParts(),
-    ]);
+    _fetchInitialData();
+    _subscribeToUpdates();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    _jobsSubscription?.cancel();
+    _servicesSubscription?.cancel();
+    _partsSubscription?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _fetchInitialData() async {
+    try {
+      final results = await Future.wait([
+        _supabaseService.getJobDetails(),
+        _supabaseService.getAllServices(),
+        _supabaseService.getAllParts(),
+      ]);
+      if (mounted) {
+        setState(() {
+          _completedJobs = (results[0] as List<JobDetails>)
+              .where((job) => job.status == 'Completed')
+              .toList();
+          allServices = results[1] as List<String>;
+          allParts = results[2] as List<String>;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error fetching data: ${e.toString()}')),
+        );
+      }
+    }
+  }
+
+  void _subscribeToUpdates() {
+    _jobsSubscription = _supabaseService.getJobsStream().listen((_) => _fetchInitialData());
+    _servicesSubscription = _supabaseService.getServicesStream().listen((_) => _fetchInitialData());
+    _partsSubscription = _supabaseService.getPartsStream().listen((_) => _fetchInitialData());
   }
 
   List<JobDetails> _filterItems(List<JobDetails> items) {
@@ -239,13 +281,9 @@ class _ServiceHistoryPageState extends State<ServiceHistoryPage> {
   }
 
   @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
+    final items = _filterItems(_completedJobs);
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -427,17 +465,8 @@ class _ServiceHistoryPageState extends State<ServiceHistoryPage> {
 
             // Service History List
             Expanded(
-              child: FutureBuilder<List<dynamic>>(
-                future: _dataFuture,
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-                  if (snapshot.hasError) {
-                    return Center(child: Text('Error: ${snapshot.error}'));
-                  }
-                  if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                    return const Center(
+              child: items.isEmpty
+                  ? const Center(
                       child: Text(
                         'No service history found',
                         style: TextStyle(
@@ -445,132 +474,122 @@ class _ServiceHistoryPageState extends State<ServiceHistoryPage> {
                           color: Color(0xFF61758A),
                         ),
                       ),
-                    );
-                  }
+                    )
+                  : ListView.builder(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      itemCount: items.length,
+                      itemBuilder: (context, index) {
+                        final job = items[index];
+                        final item = ServiceHistoryItem(
+                          id: job.id,
+                          plateNumber: job.plateNumber,
+                          customerName: job.customerName,
+                          customerPhone: job.customerPhone,
+                          vehicle: job.vehicle,
+                          serviceDate: job.createdAt,
+                          serviceType: job.requestedServices.map((task) => task.serviceName).join(', '),
+                          status: job.status,
+                          timeElapsed: job.timeElapsed,
+                          jobDescription: job.jobDescription,
+                          requestedServices: job.requestedServices.map((task) => task.serviceName).toList(),
+                          assignedParts: job.assignedParts,
+                          remarks: job.remarks,
+                          photos: [], // Not available in JobDetails
+                        );
 
-                  final allItems = snapshot.data![0] as List<JobDetails>;
-                  allServices = snapshot.data![1] as List<String>;
-                  allParts = snapshot.data![2] as List<String>;
-
-                  final items = _filterItems(allItems);
-
-                  return ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    itemCount: items.length,
-                    itemBuilder: (context, index) {
-                      final job = items[index];
-                      final item = ServiceHistoryItem(
-                        id: job.id,
-                        plateNumber: job.plateNumber,
-                        customerName: job.customerName,
-                        customerPhone: job.customerPhone,
-                        vehicle: job.vehicle,
-                        serviceDate: job.createdAt,
-                        serviceType: job.requestedServices.map((task) => task.serviceName).join(', '),
-                        status: job.status,
-                        timeElapsed: job.timeElapsed,
-                        jobDescription: job.jobDescription,
-                        requestedServices: job.requestedServices.map((task) => task.serviceName).toList(),
-                        assignedParts: job.assignedParts,
-                        remarks: job.remarks,
-                        photos: [], // Not available in JobDetails
-                      );
-
-                      return GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => ServiceHistoryDetailsPage(
-                                serviceHistoryItem: item,
-                              ),
-                            ),
-                          );
-                        },
-                        child: Container(
-                          margin: const EdgeInsets.only(bottom: 8),
-                          child: Row(
-                            children: [
-                              // Service Icon
-                              Container(
-                                width: 48,
-                                height: 48,
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(8),
-                                  color: const Color(0xFFF0F2F5),
-                                ),
-                                child: const Icon(
-                                  Icons.build,
-                                  color: Color(0xFF121417),
-                                  size: 24,
+                        return GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => ServiceHistoryDetailsPage(
+                                  serviceHistoryItem: item,
                                 ),
                               ),
-
-                              const SizedBox(width: 16),
-
-                              // Service Details
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      item.plateNumber,
-                                      style: const TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w500,
-                                        color: Color(0xFF121417),
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      item.customerName,
-                                      style: const TextStyle(
-                                        fontSize: 14,
-                                        color: Color(0xFF61758A),
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      '${item.serviceType} • ${_formatDate(item.serviceDate)}',
-                                      style: const TextStyle(
-                                        fontSize: 12,
-                                        color: Color(0xFF61758A),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-
-                              // Status
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 4,
-                                ),
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(12),
-                                  color: const Color(
-                                    0xFF4CAF50,
-                                  ).withAlpha(26),
-                                ),
-                                child: Text(
-                                  item.status,
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w500,
-                                    color: Color(0xFF4CAF50),
+                            );
+                          },
+                          child: Container(
+                            margin: const EdgeInsets.only(bottom: 8),
+                            child: Row(
+                              children: [
+                                // Service Icon
+                                Container(
+                                  width: 48,
+                                  height: 48,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(8),
+                                    color: const Color(0xFFF0F2F5),
+                                  ),
+                                  child: const Icon(
+                                    Icons.build,
+                                    color: Color(0xFF121417),
+                                    size: 24,
                                   ),
                                 ),
-                              ),
-                            ],
+
+                                const SizedBox(width: 16),
+
+                                // Service Details
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        item.plateNumber,
+                                        style: const TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w500,
+                                          color: Color(0xFF121417),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        item.customerName,
+                                        style: const TextStyle(
+                                          fontSize: 14,
+                                          color: Color(0xFF61758A),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        '${item.serviceType} • ${_formatDate(item.serviceDate)}',
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          color: Color(0xFF61758A),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+
+                                // Status
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 4,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(12),
+                                    color: const Color(
+                                      0xFF4CAF50,
+                                    ).withAlpha(26),
+                                  ),
+                                  child: Text(
+                                    item.status,
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w500,
+                                      color: Color(0xFF4CAF50),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                      );
-                    },
-                  );
-                },
-              ),
+                        );
+                      },
+                    ),
             ),
           ],
         ),
