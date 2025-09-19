@@ -28,6 +28,7 @@ class _ServiceHistoryPageState extends State<ServiceHistoryPage> {
   List<String> allServices = [];
   List<String> allParts = [];
   List<JobDetails> _completedJobs = [];
+  bool _isLoading = true;
 
   StreamSubscription? _jobsSubscription;
   StreamSubscription? _servicesSubscription;
@@ -50,12 +51,19 @@ class _ServiceHistoryPageState extends State<ServiceHistoryPage> {
   }
 
   Future<void> _fetchInitialData() async {
+    setState(() {
+      _isLoading = true;
+    });
+
     try {
       final mechanicId = await _authService.getCurrentUserId();
       if (mechanicId == null && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Could not identify the current mechanic.')),
         );
+        setState(() {
+          _isLoading = false;
+        });
         return;
       }
 
@@ -71,10 +79,14 @@ class _ServiceHistoryPageState extends State<ServiceHistoryPage> {
               .toList();
           allServices = results[1] as List<String>;
           allParts = results[2] as List<String>;
+          _isLoading = false;
         });
       }
     } catch (e) {
       if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error fetching data: ${e.toString()}')),
         );
@@ -475,131 +487,133 @@ class _ServiceHistoryPageState extends State<ServiceHistoryPage> {
 
             // Service History List
             Expanded(
-              child: items.isEmpty
-                  ? const Center(
-                      child: Text(
-                        'No service history found',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Color(0xFF61758A),
-                        ),
-                      ),
-                    )
-                  : ListView.builder(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      itemCount: items.length,
-                      itemBuilder: (context, index) {
-                        final job = items[index];
-                        final item = ServiceHistoryItem(
-                          id: job.id,
-                          plateNumber: job.plateNumber,
-                          customerName: job.customerName,
-                          customerPhone: job.customerPhone,
-                          vehicle: job.vehicle,
-                          serviceDate: job.createdAt,
-                          serviceType: job.requestedServices.map((task) => task.serviceName).join(', '),
-                          status: job.status,
-                          timeElapsed: job.timeElapsed,
-                          jobDescription: job.jobDescription,
-                          requestedServices: job.requestedServices.map((task) => task.serviceName).toList(),
-                          assignedParts: job.assignedParts,
-                          remarks: job.remarks,
-                          photos: [], // Not available in JobDetails
-                        );
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : items.isEmpty
+                      ? const Center(
+                          child: Text(
+                            'No service history found',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Color(0xFF61758A),
+                            ),
+                          ),
+                        )
+                      : ListView.builder(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          itemCount: items.length,
+                          itemBuilder: (context, index) {
+                            final job = items[index];
+                            final item = ServiceHistoryItem(
+                              id: job.id,
+                              plateNumber: job.plateNumber,
+                              customerName: job.customerName,
+                              customerPhone: job.customerPhone,
+                              vehicle: job.vehicle,
+                              serviceDate: job.createdAt,
+                              serviceType: job.requestedServices.map((task) => task.serviceName).join(', '),
+                              status: job.status,
+                              timeElapsed: job.timeElapsed,
+                              jobDescription: job.jobDescription,
+                              requestedServices: job.requestedServices.map((task) => task.serviceName).toList(),
+                              assignedParts: job.assignedParts,
+                              remarks: job.remarks,
+                              photos: [], // Not available in JobDetails
+                            );
 
-                        return GestureDetector(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => ServiceHistoryDetailsPage(
-                                  serviceHistoryItem: item,
+                            return GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => ServiceHistoryDetailsPage(
+                                      serviceHistoryItem: item,
+                                    ),
+                                  ),
+                                );
+                              },
+                              child: Container(
+                                margin: const EdgeInsets.only(bottom: 8),
+                                child: Row(
+                                  children: [
+                                    // Service Icon
+                                    Container(
+                                      width: 48,
+                                      height: 48,
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(8),
+                                        color: const Color(0xFFF0F2F5),
+                                      ),
+                                      child: const Icon(
+                                        Icons.build,
+                                        color: Color(0xFF121417),
+                                        size: 24,
+                                      ),
+                                    ),
+
+                                    const SizedBox(width: 16),
+
+                                    // Service Details
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            item.plateNumber,
+                                            style: const TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w500,
+                                              color: Color(0xFF121417),
+                                            ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            item.customerName,
+                                            style: const TextStyle(
+                                              fontSize: 14,
+                                              color: Color(0xFF61758A),
+                                            ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            '${item.serviceType} • ${_formatDate(item.serviceDate)}',
+                                            style: const TextStyle(
+                                              fontSize: 12,
+                                              color: Color(0xFF61758A),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+
+                                    // Status
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 4,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(12),
+                                        color: const Color(
+                                          0xFF4CAF50,
+                                        ).withAlpha(26),
+                                      ),
+                                      child: Text(
+                                        item.status,
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w500,
+                                          color: Color(0xFF4CAF50),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
                             );
                           },
-                          child: Container(
-                            margin: const EdgeInsets.only(bottom: 8),
-                            child: Row(
-                              children: [
-                                // Service Icon
-                                Container(
-                                  width: 48,
-                                  height: 48,
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(8),
-                                    color: const Color(0xFFF0F2F5),
-                                  ),
-                                  child: const Icon(
-                                    Icons.build,
-                                    color: Color(0xFF121417),
-                                    size: 24,
-                                  ),
-                                ),
-
-                                const SizedBox(width: 16),
-
-                                // Service Details
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        item.plateNumber,
-                                        style: const TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w500,
-                                          color: Color(0xFF121417),
-                                        ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        item.customerName,
-                                        style: const TextStyle(
-                                          fontSize: 14,
-                                          color: Color(0xFF61758A),
-                                        ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        '${item.serviceType} • ${_formatDate(item.serviceDate)}',
-                                        style: const TextStyle(
-                                          fontSize: 12,
-                                          color: Color(0xFF61758A),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-
-                                // Status
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 4,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(12),
-                                    color: const Color(
-                                      0xFF4CAF50,
-                                    ).withAlpha(26),
-                                  ),
-                                  child: Text(
-                                    item.status,
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w500,
-                                      color: Color(0xFF4CAF50),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      },
-                    ),
+                        ),
             ),
           ],
         ),
