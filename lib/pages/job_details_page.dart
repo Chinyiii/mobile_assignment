@@ -652,6 +652,31 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
     });
   }
 
+  void _showDeleteConfirmationDialog(int remarkId) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Delete Remark'),
+          content: const Text('Are you sure you want to delete this remark?'),
+          actions: [
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+            TextButton(
+              child: const Text('Delete'),
+              onPressed: () {
+                Navigator.of(context).pop(); // Close confirmation dialog
+                onDeleteRemark(remarkId);
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Future<void> _navigateToAddRemarkPage() async {
     final newRemark = await Navigator.push<Remark>(
       context,
@@ -698,8 +723,17 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
             ),
           ),
         ),
-        ..._jobDetails.remarks.map(
-          (remark) => GestureDetector(
+        if (_jobDetails.remarks.isEmpty)
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Text(
+              'No remarks yet.',
+              style: TextStyle(fontSize: 14, color: Color(0xFF6B7582)),
+            ),
+          )
+        else
+          ..._jobDetails.remarks.map(
+            (remark) => GestureDetector(
             onTap: () {
               // 👇 Navigate to read-only view page
               Navigator.push(
@@ -811,7 +845,7 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
                       ),
                       IconButton(
                         icon: const Icon(Icons.delete, color: Colors.black),
-                        onPressed: () => onDeleteRemark(remark.id),
+                        onPressed: () => _showDeleteConfirmationDialog(remark.id),
                       ),
                     ],
                   ),
