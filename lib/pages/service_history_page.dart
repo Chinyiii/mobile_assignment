@@ -316,6 +316,7 @@ class _ServiceHistoryPageState extends State<ServiceHistoryPage> {
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
               child: Row(
                 children: [
+                  const SizedBox(width: 48),
                   const Expanded(
                     child: Text(
                       'Service History',
