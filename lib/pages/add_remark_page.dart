@@ -37,6 +37,12 @@ class _RemarkFormPageState extends State<RemarkFormPage> {
     }
   }
 
+  @override
+  void dispose() {
+    _descriptionController.dispose();
+    super.dispose();
+  }
+
   Future<void> _pickImages() async {
     final pickedFiles = await _picker.pickMultiImage();
     if (pickedFiles.isNotEmpty) {
@@ -124,31 +130,22 @@ class _RemarkFormPageState extends State<RemarkFormPage> {
   }
 
   @override
-  void dispose() {
-    _descriptionController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
         child: Column(
           children: [
-            // ✅ custom header
             _RemarkFormHeader(
               title: widget.remark == null ? "Add Remark" : "Edit Remark",
               onBack: () => Navigator.pop(context),
             ),
-
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // ✅ Description Section
                     const Text(
                       'Description',
                       style: TextStyle(
@@ -158,18 +155,22 @@ class _RemarkFormPageState extends State<RemarkFormPage> {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    TextField(
-                      controller: _descriptionController,
-                      maxLines: 3,
-                      decoration: const InputDecoration(
-                        hintText: "Enter description...",
-                        border: OutlineInputBorder(),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF0F2F5),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: TextField(
+                        controller: _descriptionController,
+                        maxLines: 5,
+                        decoration: const InputDecoration(
+                          hintText: "Enter description...",
+                          border: InputBorder.none,
+                          contentPadding: EdgeInsets.all(16),
+                        ),
                       ),
                     ),
-
                     const SizedBox(height: 24),
-
-                    // ✅ Photos Section
                     const Text(
                       'Photos',
                       style: TextStyle(
@@ -179,7 +180,6 @@ class _RemarkFormPageState extends State<RemarkFormPage> {
                       ),
                     ),
                     const SizedBox(height: 8),
-
                     GridView.builder(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
@@ -187,10 +187,10 @@ class _RemarkFormPageState extends State<RemarkFormPage> {
                           _existingImages.length + _selectedImages.length + 2,
                       gridDelegate:
                           const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 3,
-                            crossAxisSpacing: 8,
-                            mainAxisSpacing: 8,
-                          ),
+                        crossAxisCount: 3,
+                        crossAxisSpacing: 8,
+                        mainAxisSpacing: 8,
+                      ),
                       itemBuilder: (context, index) {
                         if (index < _existingImages.length) {
                           final url = _existingImages[index];
@@ -221,42 +221,43 @@ class _RemarkFormPageState extends State<RemarkFormPage> {
                             _existingImages.length + _selectedImages.length) {
                           return _AddTile(
                             icon: Icons.add_photo_alternate,
+                            label: 'Gallery',
                             onTap: _pickImages,
                           );
                         } else {
                           return _AddTile(
                             icon: Icons.camera_alt,
+                            label: 'Camera',
                             onTap: _takePhoto,
                           );
                         }
                       },
                     ),
-
-                    const SizedBox(height: 24),
-
-                    // ✅ Save button
-                    Center(
-                      child: _isSaving
-                          ? const CircularProgressIndicator()
-                          : ElevatedButton(
-                              onPressed: _saveRemark,
-                              style: ElevatedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 24,
-                                  vertical: 12,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                              child: Text(
-                                widget.remark == null
-                                    ? "Save Remark"
-                                    : "Update Remark",
-                              ),
-                            ),
-                    ),
                   ],
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: _isSaving ? null : _saveRemark,
+                  style: ElevatedButton.styleFrom(
+                    foregroundColor: Colors.black,
+                    backgroundColor: const Color(0xFFDEE8F2),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: _isSaving
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : Text(
+                          widget.remark == null
+                              ? "Save Remark"
+                              : "Update Remark",
+                        ),
                 ),
               ),
             ),
@@ -267,7 +268,6 @@ class _RemarkFormPageState extends State<RemarkFormPage> {
   }
 }
 
-// ✅ Custom header
 class _RemarkFormHeader extends StatelessWidget {
   final String title;
   final VoidCallback onBack;
@@ -287,7 +287,7 @@ class _RemarkFormHeader extends StatelessWidget {
               height: 48,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(24),
-                color: const Color(0xFFF2F2F5),
+                color: const Color(0xFFF0F2F5),
               ),
               child: const Icon(
                 Icons.arrow_back,
@@ -297,12 +297,57 @@ class _RemarkFormHeader extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 16),
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-              color: Color(0xFF121417),
+          Expanded(
+            child: Text(
+              title,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF121417),
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+          const SizedBox(width: 48),
+        ],
+      ),
+    );
+  }
+}
+
+class _ImageTile extends StatelessWidget {
+  final String? url;
+  final File? file;
+  final VoidCallback onRemove;
+
+  const _ImageTile.network({required this.url, required this.onRemove})
+      : file = null;
+  const _ImageTile.file({required this.file, required this.onRemove})
+      : url = null;
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: Stack(
+        children: [
+          Positioned.fill(
+            child: url != null
+                ? Image.network(url!, fit: BoxFit.cover)
+                : Image.file(file!, fit: BoxFit.cover),
+          ),
+          Positioned(
+            top: 4,
+            right: 4,
+            child: GestureDetector(
+              onTap: onRemove,
+              child: Container(
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.black54,
+                ),
+                child: const Icon(Icons.close, color: Colors.white, size: 18),
+              ),
             ),
           ),
         ],
@@ -311,62 +356,29 @@ class _RemarkFormHeader extends StatelessWidget {
   }
 }
 
-// ✅ Reusable image tile (network or file)
-class _ImageTile extends StatelessWidget {
-  final String? url;
-  final File? file;
-  final VoidCallback onRemove;
-
-  const _ImageTile.network({required this.url, required this.onRemove})
-    : file = null;
-
-  const _ImageTile.file({required this.file, required this.onRemove})
-    : url = null;
-
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        Positioned.fill(
-          child: url != null
-              ? Image.network(url!, fit: BoxFit.cover)
-              : Image.file(file!, fit: BoxFit.cover),
-        ),
-        Positioned(
-          top: 6,
-          right: 6,
-          child: GestureDetector(
-            onTap: onRemove,
-            child: Container(
-              width: 28,
-              height: 28,
-              decoration: const BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.black54,
-              ),
-              child: const Icon(Icons.close, color: Colors.white, size: 18),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-// ✅ Add buttons for gallery/camera
 class _AddTile extends StatelessWidget {
   final IconData icon;
+  final String label;
   final VoidCallback onTap;
 
-  const _AddTile({required this.icon, required this.onTap});
-
+  const _AddTile({required this.icon, required this.label, required this.onTap});
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        color: Colors.grey[300],
-        child: Icon(icon, size: 40, color: Colors.black54),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF0F2F5),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 32, color: const Color(0xFF61758A)),
+            const SizedBox(height: 8),
+            Text(label, style: const TextStyle(color: Color(0xFF61758A))),
+          ],
+        ),
       ),
     );
   }
