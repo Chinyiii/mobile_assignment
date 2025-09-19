@@ -1,3 +1,4 @@
+import 'package:mobile_assignment/models/remark.dart';
 import 'package:mobile_assignment/models/service_task.dart';
 
 class JobDetails {
@@ -9,7 +10,7 @@ class JobDetails {
   final String jobDescription;
   final List<ServiceTask> requestedServices;
   final List<String> assignedParts;
-  final List<String> remarks;
+  final List<Remark> remarks;
   final String status;
   final String timeElapsed;
   final DateTime createdAt;
@@ -28,7 +29,7 @@ class JobDetails {
     required this.status,
     required this.timeElapsed,
     required this.createdAt,
-    this.signatureUrl, // 👈 optional, can be null
+    this.signatureUrl,
   });
 
   static String calculateTimeElapsed(String? startTime, String? endTime) {
@@ -51,7 +52,7 @@ class JobDetails {
           .map((e) => ServiceTask.fromJson(e))
           .toList(),
       assignedParts: List<String>.from(json['assigned_parts'] ?? []),
-      remarks: List<String>.from(json['remarks'] ?? []),
+      remarks: List<Remark>.from(json['remarks'] ?? []),
       status: json['status'],
       timeElapsed: json['time_elapsed'],
       createdAt: DateTime.parse(json['created_at']),
@@ -59,3 +60,5 @@ class JobDetails {
     );
   }
 }
+
+

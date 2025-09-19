@@ -1,9 +1,10 @@
+import 'dart:io';
 import 'package:mobile_assignment/models/service_history_item.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:mobile_assignment/models/job_details.dart';
 import 'dart:typed_data';
 import 'package:uuid/uuid.dart';
-
+import '../models/remark.dart';
 import '../models/service_task.dart';
 
 final supabase = Supabase.instance.client;
@@ -23,7 +24,11 @@ class SupabaseService {
       vehicles:vehicle_id ( vehicle_name, plate_number ),
       job_tasks ( task_id, service_id, status, duration, start_time, end_time, session_start_time, services:service_id ( service_name ) ),
       job_parts ( parts:part_id ( part_name ) ),
-      remarks ( text, created_at )
+      remarks (
+        remark_id,
+        text,
+        remark_photos ( photo_url )
+      )
     ''');
 
     final List<JobDetails> jobDetailsList = [];
@@ -55,15 +60,16 @@ class SupabaseService {
             );
           }).toList(),
           assignedParts:
-              (job['job_parts'] as List?)
-                  ?.map((jp) => jp['parts']['part_name'] as String)
-                  .toList() ??
+          (job['job_parts'] as List?)
+              ?.map((jp) => jp['parts']['part_name'] as String)
+              .toList() ??
               [],
-          remarks:
-              (job['remarks'] as List?)
-                  ?.map((r) => r['text'] as String)
-                  .toList() ??
-              [],
+          remarks: (job['remarks'] is List)
+              ? (job['remarks'] as List)
+              .whereType<Map<String, dynamic>>() // only maps
+              .map((r) => Remark.fromJson(r))
+              .toList()
+              : [],
           status: job['status'],
           timeElapsed: JobDetails.calculateTimeElapsed(
             job['start_time'],
@@ -102,7 +108,11 @@ class SupabaseService {
           services:service_id ( service_name )
     ),
         job_parts ( parts:part_id ( part_name ) ),
-        remarks ( text, created_at )
+        remarks (
+            remark_id,
+            text,
+            remark_photos ( photo_url )
+          )
       ''')
         .eq('job_id', jobId)
         .single();
@@ -138,13 +148,16 @@ class SupabaseService {
         );
       }).toList(),
       assignedParts:
-          (job['job_parts'] as List?)
-              ?.map((jp) => jp['parts']['part_name'] as String)
-              .toList() ??
+      (job['job_parts'] as List?)
+          ?.map((jp) => jp['parts']['part_name'] as String)
+          .toList() ??
           [],
-      remarks:
-          (job['remarks'] as List?)?.map((r) => r['text'] as String).toList() ??
-          [],
+      remarks: (job['remarks'] is List)
+          ? (job['remarks'] as List)
+          .whereType<Map<String, dynamic>>() // only maps
+          .map((r) => Remark.fromJson(r))
+          .toList()
+          : [],
       status: job['status'],
       timeElapsed: _calculateTimeElapsed(job['start_time'], job['end_time']),
       createdAt: DateTime.parse(job['created_at']),
@@ -197,7 +210,11 @@ class SupabaseService {
               vehicles:vehicle_id ( vehicle_name, plate_number ),
               job_tasks ( services:service_id ( service_name ) ),
               job_parts ( parts:part_id ( part_name ) ),
-              remarks ( text, created_at )
+              remarks (
+                remark_id,
+                text,
+                remark_photos ( photo_url )
+              )
             )
           ''')
           .eq('vehicle_id', vehicleId);
@@ -215,33 +232,34 @@ class SupabaseService {
               plateNumber: job['vehicles']['plate_number'],
               jobDescription: job['job_description'],
               requestedServices:
-                  (job['job_tasks'] as List?)
-                      ?.map((js) => js['services']['service_name'] as String)
-                      .toList() ??
+              (job['job_tasks'] as List?)
+                  ?.map((js) => js['services']['service_name'] as String)
+                  .toList() ??
                   [],
               assignedParts:
-                  (job['job_parts'] as List?)
-                      ?.map((jp) => jp['parts']['part_name'] as String)
-                      .toList() ??
+              (job['job_parts'] as List?)
+                  ?.map((jp) => jp['parts']['part_name'] as String)
+                  .toList() ??
                   [],
-              remarks:
-                  (job['remarks'] as List?)
-                      ?.map((r) => r['text'] as String)
-                      .toList() ??
-                  [],
+              remarks: (job['remarks'] is List)
+                  ? (job['remarks'] as List)
+                  .whereType<Map<String, dynamic>>() // only maps
+                  .map((r) => Remark.fromJson(r))
+                  .toList()
+                  : [],
               status: job['status'],
               serviceDate: DateTime.parse(historyItem['service_date']),
               serviceType:
-                  (job['job_tasks'] as List?)
-                      ?.map((js) => js['services']['service_name'] as String)
-                      .join(', ') ??
+              (job['job_tasks'] as List?)
+                  ?.map((js) => js['services']['service_name'] as String)
+                  .join(', ') ??
                   '',
               timeElapsed: JobDetails.calculateTimeElapsed(
                 job['start_time'],
                 job['end_time'],
               ),
               photos:
-                  [], // Photos are in a separate table, not directly linked here.
+              [], // Photos are in a separate table, not directly linked here.
             ),
           );
         }
@@ -267,13 +285,13 @@ class SupabaseService {
   }
 
   Future<void> updateTaskStatus(
-    int taskId,
-    String status, {
-    DateTime? startTime,
-    DateTime? endTime,
-    Duration? duration,
-    DateTime? sessionStartTime,
-  }) async {
+      int taskId,
+      String status, {
+        DateTime? startTime,
+        DateTime? endTime,
+        Duration? duration,
+        DateTime? sessionStartTime,
+      }) async {
     Map<String, dynamic> updateData = {'status': status};
 
     if (startTime != null) {
@@ -290,7 +308,7 @@ class SupabaseService {
       final minutes = (duration.inMinutes % 60);
       final seconds = (duration.inSeconds % 60);
       updateData['duration'] =
-          '$hours:${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+      '$hours:${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
     }
 
     // Handle session_start_time
@@ -351,10 +369,10 @@ class SupabaseService {
     await supabase.storage
         .from('job_asset_storage')
         .uploadBinary(
-          filePath,
-          signatureBytes,
-          fileOptions: const FileOptions(contentType: 'image/png'),
-        );
+      filePath,
+      signatureBytes,
+      fileOptions: const FileOptions(contentType: 'image/png'),
+    );
 
     // Save only the file path in DB
     await supabase
@@ -389,6 +407,141 @@ class SupabaseService {
   Stream<List<Map<String, dynamic>>> getPartsStream() {
     return supabase.from('parts').stream(primaryKey: ['part_id']);
   }
+
+  // Cia Liang
+  Future<Remark> addRemarkWithPhotos({
+    required int jobId,
+    required int userId,
+    required String description,
+    required List<File> imageFiles,
+  }) async {
+    final response = await supabase.from('remarks').insert({
+      'job_id': jobId,
+      'user_id': userId,
+      'text': description,
+      'created_at': DateTime.now().toIso8601String(),
+    }).select().single();
+
+    final remarkId = response['remark_id'] as int;
+
+    final uploadedUrls = <String>[];
+    for (final file in imageFiles) {
+      final fileName =
+          '${DateTime.now().millisecondsSinceEpoch}_${file.path.split('/').last}';
+      await supabase.storage.from('remark_photos').upload(fileName, file);
+      final publicUrl =
+      supabase.storage.from('remark_photos').getPublicUrl(fileName);
+
+      uploadedUrls.add(publicUrl);
+
+      await supabase.from('remark_photos').insert({
+        'remark_id': remarkId,
+        'photo_url': publicUrl,
+      });
+    }
+
+    return Remark(
+      id: remarkId,
+      text: description,
+      imageUrls: uploadedUrls,
+    );
+  }
+
+
+  Future<void> updateRemark({
+    required int remarkId,
+    required String newText,
+    List<File>? newFiles,
+  }) async {
+    // Update text
+    await supabase.from('remarks').update({'text': newText}).eq('remark_id', remarkId);
+
+    // Upload new images if any
+    if (newFiles != null && newFiles.isNotEmpty) {
+      for (var file in newFiles) {
+        final fileName = '${DateTime.now().millisecondsSinceEpoch}_${file.path.split('/').last}';
+        final storageResponse = await supabase.storage.from('remark_photos').upload(fileName, file);
+
+        final publicUrl = supabase.storage.from('remark_photos').getPublicUrl(fileName);
+
+        await supabase.from('remark_photos').insert({
+          'remark_id': remarkId,
+          'photo_url': publicUrl,
+        });
+      }
+    }
+  }
+
+  Future<void> deleteRemark(int remarkId) async {
+    try {
+      // 1️⃣ Get all photo URLs for this remark
+      final photos = await supabase
+          .from('remark_photos')
+          .select('photo_url')
+          .eq('remark_id', remarkId);
+
+      // 2️⃣ Delete each file from storage bucket
+      for (final photo in photos) {
+        final photoUrl = photo['photo_url'] as String;
+        final fileName = photoUrl.split('/').last;
+
+        final storageResp = await supabase.storage.from('remark_photos').remove([fileName]);
+        print('Deleted from bucket: $storageResp');
+      }
+
+      // 3️⃣ Delete photo records from DB
+      await supabase.from('remark_photos').delete().eq('remark_id', remarkId);
+      print('Deleted photo records from DB');
+
+      // 4️⃣ Delete the remark itself
+      await supabase.from('remarks').delete().eq('remark_id', remarkId);
+      print('Deleted remark $remarkId');
+    } catch (e) {
+      print('Error deleting remark: $e');
+    }
+  }
+
+
+
+  Future<String> uploadRemarkImage(int remarkId, File file) async {
+    final fileName = '${DateTime.now().millisecondsSinceEpoch}_${file.path.split('/').last}';
+
+    // Upload file to storage
+    await supabase.storage.from('remark_photos').upload(fileName, file);
+
+    // Get public URL
+    final publicUrl = supabase.storage.from('remark_photos').getPublicUrl(fileName);
+
+    // Insert record in DB
+    await supabase.from('remark_photos').insert({
+      'remark_id': remarkId,
+      'photo_url': publicUrl,
+    });
+
+    return publicUrl;
+  }
+
+  Future<void> deleteRemarkPhoto(int remarkId, String photoUrl) async {
+    try {
+      // Supabase bucket stores only the filename
+      final fileName = photoUrl.split('/').last;
+
+      // Delete from storage bucket
+      final storageResp = await supabase.storage.from('remark_photos').remove([fileName]);
+      print('Deleted from bucket: $storageResp');
+
+      // Delete record from DB
+      await supabase.from('remark_photos')
+          .delete()
+          .eq('remark_id', remarkId)
+          .eq('photo_url', photoUrl);
+
+      print('Deleted from DB: $photoUrl');
+    } catch (e) {
+      print('Error deleting remark photo: $e');
+    }
+  }
+
 }
 
 

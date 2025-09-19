@@ -1,3 +1,5 @@
+import 'package:mobile_assignment/models/remark.dart';
+
 class ServiceHistoryItem {
   final int id;
   final String plateNumber;
@@ -11,7 +13,7 @@ class ServiceHistoryItem {
   final String jobDescription;
   final List<String> requestedServices;
   final List<String> assignedParts;
-  final List<String> remarks;
+  final List<Remark> remarks;
   final List<String> photos;
 
   ServiceHistoryItem({

@@ -427,7 +427,7 @@ class _ServiceHistoryDetailsPageState extends State<ServiceHistoryDetailsPage> {
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
-                                    entry.value,
+                                    entry.value.text,
                                     style: const TextStyle(
                                       fontSize: 14,
                                       color: Color(0xFF6B7582),
