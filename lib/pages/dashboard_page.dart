@@ -37,13 +37,17 @@ class _DashboardPageState extends State<DashboardPage> {
       final mechanicId = await _authService.getCurrentUserId();
       if (mechanicId == null && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not identify the current mechanic.')),
+          const SnackBar(
+            content: Text('Could not identify the current mechanic.'),
+          ),
         );
         setState(() => _isLoading = false);
         return;
       }
 
-      final jobs = await SupabaseService().getJobDetails(mechanicId: mechanicId);
+      final jobs = await SupabaseService().getJobDetails(
+        mechanicId: mechanicId,
+      );
       if (mounted) {
         setState(() {
           _jobDetails = jobs;
@@ -63,14 +67,17 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   void _subscribeToJobsUpdates() {
-    _jobsSubscription = SupabaseService().getJobsStream().listen((data) {
-      if (mounted) {
-        print('Real-time update received for jobs list');
-        _fetchInitialJobs();
-      }
-    }, onError: (e) {
-      print('Error in real-time subscription: $e');
-    });
+    _jobsSubscription = SupabaseService().getJobsStream().listen(
+      (data) {
+        if (mounted) {
+          print('Real-time update received for jobs list');
+          _fetchInitialJobs();
+        }
+      },
+      onError: (e) {
+        print('Error in real-time subscription: $e');
+      },
+    );
   }
 
   @override
@@ -82,28 +89,23 @@ class _DashboardPageState extends State<DashboardPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Header
-            const Padding(
-              padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+              child: Row(
                 children: [
-                  Text(
-                    'Dashboard',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFF121417),
+                  const SizedBox(width: 48),
+                  const Expanded(
+                    child: Text(
+                      'Dashboard',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF121417),
+                      ),
+                      textAlign: TextAlign.center,
                     ),
                   ),
-                  SizedBox(height: 8),
-                  Text(
-                    'Today',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFF121417),
-                    ),
-                  ),
+                  const SizedBox(width: 48),
                 ],
               ),
             ),
@@ -112,8 +114,18 @@ class _DashboardPageState extends State<DashboardPage> {
             Expanded(
               child: _isLoading
                   ? const Center(child: CircularProgressIndicator())
+                  : _jobDetails.isEmpty
+                  ? const Center(
+                      child: Text(
+                        'No jobs assigned for today.',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Color(0xFF61758A),
+                        ),
+                      ),
+                    )
                   : ListView.builder(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
                       itemCount: _jobDetails.length,
                       itemBuilder: (context, index) {
                         final job = _jobDetails[index];
@@ -151,7 +163,8 @@ class _DashboardPageState extends State<DashboardPage> {
                                 // Job Details
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         job.jobDescription,

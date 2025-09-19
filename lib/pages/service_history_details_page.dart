@@ -380,73 +380,82 @@ class _ServiceHistoryDetailsPageState extends State<ServiceHistoryDetailsPage> {
                         ),
                       ),
                     ),
-                    ...widget.serviceHistoryItem.remarks.map(
-                      (remark) => Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
+                    if (widget.serviceHistoryItem.remarks.isEmpty)
+                      const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        child: Text(
+                          'No remarks for this service.',
+                          style: TextStyle(fontSize: 14, color: Color(0xFF6B7582)),
                         ),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Remark Icon
-                            Container(
-                              width: 48,
-                              height: 48,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(8),
-                                color: const Color(0xFFF2F2F5),
+                      )
+                    else
+                      ...widget.serviceHistoryItem.remarks.map(
+                        (remark) => Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Remark Icon
+                              Container(
+                                width: 48,
+                                height: 48,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(8),
+                                  color: const Color(0xFFF2F2F5),
+                                ),
+                                child: const Icon(
+                                  Icons.note,
+                                  color: Color(0xFF121417),
+                                  size: 24,
+                                ),
                               ),
-                              child: const Icon(
-                                Icons.note,
-                                color: Color(0xFF121417),
-                                size: 24,
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            // Remark Info
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  if (remark.text.trim().isNotEmpty)
-                                    Text(
-                                      remark.text,
-                                      style: const TextStyle(
-                                        fontSize: 14,
-                                        color: Color(0xFF6B7582),
+                              const SizedBox(width: 16),
+                              // Remark Info
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    if (remark.text.trim().isNotEmpty)
+                                      Text(
+                                        remark.text,
+                                        style: const TextStyle(
+                                          fontSize: 14,
+                                          color: Color(0xFF6B7582),
+                                        ),
                                       ),
-                                    ),
-                                  const SizedBox(height: 8),
-                                  if (remark.imageUrls.isNotEmpty)
-                                    Wrap(
-                                      spacing: 8,
-                                      runSpacing: 8,
-                                      children: remark.imageUrls.map((url) {
-                                        return ClipRRect(
-                                          borderRadius: BorderRadius.circular(8),
-                                          child: Image.network(
-                                            url,
-                                            width: 70,
-                                            height: 70,
-                                            fit: BoxFit.cover,
-                                            errorBuilder: (context, error, stackTrace) => Container(
+                                    const SizedBox(height: 8),
+                                    if (remark.imageUrls.isNotEmpty)
+                                      Wrap(
+                                        spacing: 8,
+                                        runSpacing: 8,
+                                        children: remark.imageUrls.map((url) {
+                                          return ClipRRect(
+                                            borderRadius: BorderRadius.circular(8),
+                                            child: Image.network(
+                                              url,
                                               width: 70,
                                               height: 70,
-                                              color: Colors.grey[300],
-                                              child: const Icon(Icons.broken_image, size: 24),
+                                              fit: BoxFit.cover,
+                                              errorBuilder: (context, error, stackTrace) => Container(
+                                                width: 70,
+                                                height: 70,
+                                                color: Colors.grey[300],
+                                                child: const Icon(Icons.broken_image, size: 24),
+                                              ),
                                             ),
-                                          ),
-                                        );
-                                      }).toList(),
-                                    ),
-                                ],
+                                          );
+                                        }).toList(),
+                                      ),
+                                  ],
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
-                    ),
 
                     const SizedBox(height: 20),
                   ],
