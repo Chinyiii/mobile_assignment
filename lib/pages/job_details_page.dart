@@ -7,6 +7,9 @@ import 'package:mobile_assignment/pages/sign-off-page.dart';
 import 'package:mobile_assignment/services/supabase_service.dart';
 import '../widgets/service_task_widget.dart';
 import 'package:mobile_assignment/models/service_task.dart';
+import 'package:mobile_assignment/pages/remark_view_page.dart';
+import 'add_remark_page.dart';
+import '../models/remark.dart';
 
 class JobDetailsPage extends StatefulWidget {
   final JobDetails jobDetails;
@@ -45,18 +48,20 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
   }
 
   void _subscribeToJobUpdates() {
-    _jobSubscription = SupabaseService().getJobStream(_jobDetails.id).listen(
-      (data) {
-        if (mounted) {
-          print('Real-time update received for job ${_jobDetails.id}');
-          _refreshJobDetails();
-        }
-      },
-      onError: (e) {
-        print('Error in real-time subscription: $e');
-        _showErrorSnackBar('Connection to real-time updates failed.');
-      },
-    );
+    _jobSubscription = SupabaseService()
+        .getJobStream(_jobDetails.id)
+        .listen(
+          (data) {
+            if (mounted) {
+              print('Real-time update received for job ${_jobDetails.id}');
+              _refreshJobDetails();
+            }
+          },
+          onError: (e) {
+            print('Error in real-time subscription: $e');
+            _showErrorSnackBar('Connection to real-time updates failed.');
+          },
+        );
   }
 
   // --- Task Action Handlers ---
@@ -522,10 +527,6 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
                 _jobDetails.status,
                 style: const TextStyle(fontSize: 16, color: Color(0xFF121417)),
               ),
-              Text(
-                _jobDetails.timeElapsed,
-                style: const TextStyle(fontSize: 16, color: Color(0xFF121417)),
-              ),
             ],
           ),
         ),
@@ -639,6 +640,49 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
     );
   }
 
+  // remarks
+  void onAddRemark() {
+    _navigateToAddRemarkPage();
+  }
+
+  void onDeleteRemark(int remarkId) async {
+    await SupabaseService().deleteRemark(remarkId);
+    setState(() {
+      _jobDetails.remarks.removeWhere((r) => r.id == remarkId);
+    });
+  }
+
+  Future<void> _navigateToAddRemarkPage() async {
+    final newRemark = await Navigator.push<Remark>(
+      context,
+      MaterialPageRoute(
+        builder: (context) => RemarkFormPage(jobId: _jobDetails.id, userId: 2),
+      ),
+    );
+
+    if (newRemark != null) {
+      setState(() {
+        final updatedRemarks = List<Remark>.from(_jobDetails.remarks)
+          ..add(newRemark);
+
+        _jobDetails = JobDetails(
+          id: _jobDetails.id,
+          customerName: _jobDetails.customerName,
+          customerPhone: _jobDetails.customerPhone,
+          vehicle: _jobDetails.vehicle,
+          plateNumber: _jobDetails.plateNumber,
+          jobDescription: _jobDetails.jobDescription,
+          requestedServices: _jobDetails.requestedServices,
+          assignedParts: _jobDetails.assignedParts,
+          remarks: updatedRemarks,
+          status: _jobDetails.status,
+          timeElapsed: _jobDetails.timeElapsed,
+          createdAt: _jobDetails.createdAt,
+        );
+      });
+    }
+  }
+
   Widget _buildRemarksSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -654,49 +698,125 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
             ),
           ),
         ),
-        ..._jobDetails.remarks.asMap().entries.map(
-          (entry) => Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Row(
-              children: [
-                Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(8),
-                    color: const Color(0xFFF2F2F5),
-                  ),
-                  child: const Icon(
-                    Icons.note,
-                    color: Color(0xFF121417),
-                    size: 24,
-                  ),
+        ..._jobDetails.remarks.map(
+          (remark) => GestureDetector(
+            onTap: () {
+              // 👇 Navigate to read-only view page
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => RemarkViewPage(remark: remark),
                 ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+              );
+            },
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Icon
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8),
+                      color: const Color(0xFFF2F2F5),
+                    ),
+                    child: const Icon(
+                      Icons.note,
+                      color: Color(0xFF121417),
+                      size: 24,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+
+                  // Remark text + images
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (remark.text.trim().isNotEmpty)
+                          Text(
+                            remark.text,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis, // preview only
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: Color(0xFF6B7582),
+                            ),
+                          ),
+                        const SizedBox(height: 6),
+                        if (remark.imageUrls.isNotEmpty)
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: remark.imageUrls
+                                .where((url) => url.isNotEmpty)
+                                .take(2) // 👈 preview up to 2 images
+                                .map((url) {
+                                  return ClipRRect(
+                                    borderRadius: BorderRadius.circular(6),
+                                    child: Image.network(
+                                      url,
+                                      width: 50,
+                                      height: 50,
+                                      fit: BoxFit.cover,
+                                      errorBuilder:
+                                          (context, error, stackTrace) =>
+                                              Container(
+                                                width: 50,
+                                                height: 50,
+                                                color: Colors.grey[300],
+                                                child: const Icon(
+                                                  Icons.broken_image,
+                                                  size: 20,
+                                                ),
+                                              ),
+                                    ),
+                                  );
+                                })
+                                .toList(),
+                          ),
+                      ],
+                    ),
+                  ),
+
+                  // Edit + Delete buttons (unchanged)
+                  Row(
                     children: [
-                      Text(
-                        'Note ${entry.key + 1}',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                          color: Color(0xFF121417),
-                        ),
+                      IconButton(
+                        icon: const Icon(Icons.edit, color: Colors.black),
+                        onPressed: () async {
+                          final updatedRemark = await Navigator.push<Remark>(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => RemarkFormPage(
+                                jobId: _jobDetails.id,
+                                userId: 2,
+                                remark: remark,
+                              ),
+                            ),
+                          );
+
+                          if (updatedRemark != null) {
+                            final idx = _jobDetails.remarks.indexWhere(
+                              (r) => r.id == updatedRemark.id,
+                            );
+                            if (idx != -1) {
+                              _jobDetails.remarks[idx] = updatedRemark;
+                              (context as Element).markNeedsBuild();
+                            }
+                          }
+                        },
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        entry.value,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: Color(0xFF6B7582),
-                        ),
+                      IconButton(
+                        icon: const Icon(Icons.delete, color: Colors.black),
+                        onPressed: () => onDeleteRemark(remark.id),
                       ),
                     ],
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -995,19 +1115,22 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
           ),
           const SizedBox(width: 12),
           Expanded(
-            child: Container(
-              height: 40,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                color: const Color(0xFFF2F2F5),
-              ),
-              child: const Center(
-                child: Text(
-                  'Add Remarks',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF121417),
+            child: GestureDetector(
+              onTap: onAddRemark,
+              child: Container(
+                height: 40,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  color: const Color(0xFFF2F2F5),
+                ),
+                child: const Center(
+                  child: Text(
+                    'Add Remarks',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF121417),
+                    ),
                   ),
                 ),
               ),
