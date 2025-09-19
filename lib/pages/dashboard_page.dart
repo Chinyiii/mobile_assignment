@@ -14,7 +14,13 @@ class DashboardPage extends StatefulWidget {
 }
 
 class _DashboardPageState extends State<DashboardPage> {
-  List<JobDetails> _jobDetails = [];
+  List<JobDetails> _allJobs = [];
+  List<JobDetails> _pendingJobs = [];
+  List<JobDetails> _inProgressJobs = [];
+  List<JobDetails> _onHoldJobs = [];
+  List<JobDetails> _completedJobs = [];
+  List<JobDetails> _cancelledJobs = [];
+
   bool _isLoading = true;
   StreamSubscription? _jobsSubscription;
   final AuthService _authService = AuthService();
@@ -50,7 +56,17 @@ class _DashboardPageState extends State<DashboardPage> {
       );
       if (mounted) {
         setState(() {
-          _jobDetails = jobs;
+          _allJobs = jobs;
+          _pendingJobs =
+              _allJobs.where((job) => job.status == 'Pending').toList();
+          _inProgressJobs =
+              _allJobs.where((job) => job.status == 'In Progress').toList();
+          _onHoldJobs =
+              _allJobs.where((job) => job.status == 'On Hold').toList();
+          _completedJobs =
+              _allJobs.where((job) => job.status == 'Completed').toList();
+          _cancelledJobs =
+              _allJobs.where((job) => job.status == 'Cancelled').toList();
           _isLoading = false;
         });
       }
@@ -114,109 +130,146 @@ class _DashboardPageState extends State<DashboardPage> {
             Expanded(
               child: _isLoading
                   ? const Center(child: CircularProgressIndicator())
-                  : _jobDetails.isEmpty
-                  ? const Center(
-                      child: Text(
-                        'No jobs assigned for today.',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Color(0xFF61758A),
-                        ),
-                      ),
-                    )
-                  : ListView.builder(
-                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-                      itemCount: _jobDetails.length,
-                      itemBuilder: (context, index) {
-                        final job = _jobDetails[index];
-                        return GestureDetector(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    JobDetailsPage(jobDetails: job),
-                              ),
-                            );
-                          },
-                          child: Container(
-                            margin: const EdgeInsets.only(bottom: 8),
-                            child: Row(
-                              children: [
-                                // Job Icon
-                                Container(
-                                  width: 48,
-                                  height: 48,
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(8),
-                                    color: const Color(0xFFF0F2F5),
-                                  ),
-                                  child: const Icon(
-                                    Icons.build,
-                                    color: Color(0xFF121417),
-                                    size: 24,
-                                  ),
-                                ),
-
-                                const SizedBox(width: 16),
-
-                                // Job Details
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        job.jobDescription,
-                                        style: const TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w500,
-                                          color: Color(0xFF121417),
-                                        ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        job.vehicle,
-                                        style: const TextStyle(
-                                          fontSize: 14,
-                                          color: Color(0xFF61758A),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-
-                                // Status
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 12,
-                                    vertical: 6,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(16),
-                                    color: _getStatusColor(
-                                      job.status,
-                                    ).withAlpha(26),
-                                  ),
-                                  child: Text(
-                                    job.status,
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      color: _getStatusColor(job.status),
-                                    ),
-                                  ),
-                                ),
-                              ],
+                  : _allJobs.isEmpty
+                      ? const Center(
+                          child: Text(
+                            'No jobs assigned for today.',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Color(0xFF61758A),
                             ),
                           ),
-                        );
-                      },
-                    ),
+                        )
+                      : SingleChildScrollView(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildJobList('In Progress', _inProgressJobs),
+                              _buildJobList('Pending', _pendingJobs),
+                              _buildJobList('On Hold', _onHoldJobs),
+                              _buildJobList('Completed', _completedJobs),
+                              _buildJobList('Cancelled', _cancelledJobs),
+                            ],
+                          ),
+                        ),
             ),
           ],
         ),
       ),
       bottomNavigationBar: const AppBottomNavigationBar(selectedIndex: 0),
+    );
+  }
+
+  Widget _buildJobList(String title, List<JobDetails> jobs) {
+    if (jobs.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
+          child: Text(
+            title,
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF121417),
+            ),
+          ),
+        ),
+        ListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          itemCount: jobs.length,
+          itemBuilder: (context, index) {
+            final job = jobs[index];
+            return GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        JobDetailsPage(jobDetails: job),
+                  ),
+                );
+              },
+              child: Container(
+                margin: const EdgeInsets.only(bottom: 8),
+                child: Row(
+                  children: [
+                    // Job Icon
+                    Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(8),
+                        color: const Color(0xFFF0F2F5),
+                      ),
+                      child: const Icon(
+                        Icons.build,
+                        color: Color(0xFF121417),
+                        size: 24,
+                      ),
+                    ),
+
+                    const SizedBox(width: 16),
+
+                    // Job Details
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment:
+                            CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            job.jobDescription,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                              color: Color(0xFF121417),
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            job.vehicle,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: Color(0xFF61758A),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    // Status
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(16),
+                        color: _getStatusColor(
+                          job.status,
+                        ).withAlpha(26),
+                      ),
+                      child: Text(
+                        job.status,
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: _getStatusColor(job.status),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        ),
+      ],
     );
   }
 

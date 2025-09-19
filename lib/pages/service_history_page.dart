@@ -587,28 +587,6 @@ class _ServiceHistoryPageState extends State<ServiceHistoryPage> {
                                         ],
                                       ),
                                     ),
-
-                                    // Status
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 8,
-                                        vertical: 4,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(12),
-                                        color: const Color(
-                                          0xFF4CAF50,
-                                        ).withAlpha(26),
-                                      ),
-                                      child: Text(
-                                        item.status,
-                                        style: const TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w500,
-                                          color: Color(0xFF4CAF50),
-                                        ),
-                                      ),
-                                    ),
                                   ],
                                 ),
                               ),
