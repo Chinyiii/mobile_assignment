@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:mobile_assignment/auth/auth_service.dart';
 import 'package:mobile_assignment/models/job_details.dart';
 import 'package:mobile_assignment/services/supabase_service.dart';
 import '../widgets/bottom_navigation_bar.dart';
@@ -16,6 +17,7 @@ class _DashboardPageState extends State<DashboardPage> {
   List<JobDetails> _jobDetails = [];
   bool _isLoading = true;
   StreamSubscription? _jobsSubscription;
+  final AuthService _authService = AuthService();
 
   @override
   void initState() {
@@ -32,7 +34,16 @@ class _DashboardPageState extends State<DashboardPage> {
 
   Future<void> _fetchInitialJobs() async {
     try {
-      final jobs = await SupabaseService().getJobDetails();
+      final mechanicId = await _authService.getCurrentUserId();
+      if (mechanicId == null && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not identify the current mechanic.')),
+        );
+        setState(() => _isLoading = false);
+        return;
+      }
+
+      final jobs = await SupabaseService().getJobDetails(mechanicId: mechanicId);
       if (mounted) {
         setState(() {
           _jobDetails = jobs;

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:mobile_assignment/auth/auth_service.dart';
 import '../models/service_history_item.dart';
 import '../widgets/bottom_navigation_bar.dart';
 import 'service_history_details_page.dart';
@@ -20,6 +21,7 @@ class _ServiceHistoryPageState extends State<ServiceHistoryPage> {
   final TextEditingController _searchController = TextEditingController();
 
   final SupabaseService _supabaseService = SupabaseService();
+  final AuthService _authService = AuthService();
 
   String? selectedService;
   String? selectedPart;
@@ -49,8 +51,16 @@ class _ServiceHistoryPageState extends State<ServiceHistoryPage> {
 
   Future<void> _fetchInitialData() async {
     try {
+      final mechanicId = await _authService.getCurrentUserId();
+      if (mechanicId == null && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not identify the current mechanic.')),
+        );
+        return;
+      }
+
       final results = await Future.wait([
-        _supabaseService.getJobDetails(),
+        _supabaseService.getJobDetails(mechanicId: mechanicId),
         _supabaseService.getAllServices(),
         _supabaseService.getAllParts(),
       ]);

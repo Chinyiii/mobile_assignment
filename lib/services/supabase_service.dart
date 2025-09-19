@@ -11,8 +11,8 @@ final supabase = Supabase.instance.client;
 
 class SupabaseService {
   //Chinyi
-  Future<List<JobDetails>> getJobDetails() async {
-    final response = await supabase.from('jobs').select('''
+  Future<List<JobDetails>> getJobDetails({int? mechanicId}) async {
+    var query = supabase.from('jobs').select('''
       job_id,
       job_description,
       status,
@@ -30,6 +30,12 @@ class SupabaseService {
         remark_photos ( photo_url )
       )
     ''');
+
+    if (mechanicId != null) {
+      query = query.eq('mechanic_id', mechanicId);
+    }
+
+    final response = await query;
 
     final List<JobDetails> jobDetailsList = [];
     for (final job in response) {
