@@ -6,7 +6,9 @@ import 'package:mobile_assignment/services/supabase_service.dart';
 import '../widgets/service_task_widget.dart';
 import 'package:mobile_assignment/models/service_task.dart';
 
+// Displays the details of a specific job.
 class JobDetailsPage extends StatefulWidget {
+  // The job details to be displayed.
   final JobDetails jobDetails;
 
   const JobDetailsPage({super.key, required this.jobDetails});
@@ -16,11 +18,16 @@ class JobDetailsPage extends StatefulWidget {
 }
 
 class _JobDetailsPageState extends State<JobDetailsPage> {
+  // The current job details.
   late JobDetails _jobDetails;
+
+  // A future that resolves to a list of service history items for the vehicle.
   late Future<List<ServiceHistoryItem>> _serviceHistoryFuture;
+
+  // Whether the page is currently updating.
   bool _isUpdating = false;
 
-  // Helper getter to check if all tasks are completed
+  // Helper getter to check if all tasks are completed.
   bool get _areAllTasksCompleted =>
       _jobDetails.requestedServices.every((task) => task.status == 'Completed');
 
@@ -28,17 +35,20 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
   void initState() {
     super.initState();
     _jobDetails = widget.jobDetails;
-    _serviceHistoryFuture =
-        SupabaseService().getServiceHistory(_jobDetails.plateNumber);
+    _serviceHistoryFuture = SupabaseService().getServiceHistory(
+      _jobDetails.plateNumber,
+    );
   }
 
   // --- Task Action Handlers ---
 
+  // Starts a service task.
   Future<void> _startTask(ServiceTask task) async {
     setState(() => _isUpdating = true);
     try {
       final now = DateTime.now();
-      DateTime? startTime = task.startTime; // Keep original start time if it exists
+      DateTime? startTime =
+          task.startTime; // Keep original start time if it exists
       if (startTime == null) {
         startTime = now; // Set start time if it's the first time
       }
@@ -53,16 +63,20 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
     } catch (e) {
       _showErrorSnackBar('Failed to start task: ${e.toString()}');
     } finally {
-      if(mounted) setState(() => _isUpdating = false);
+      if (mounted) setState(() => _isUpdating = false);
     }
   }
 
+  // Pauses a service task.
   Future<void> _pauseTask(ServiceTask task) async {
     setState(() => _isUpdating = true);
     try {
       // Calculate the elapsed time for this session
-      final sessionDuration = task.sessionStartTime != null ? DateTime.now().difference(task.sessionStartTime!) : Duration.zero;
-      final newTotalDuration = Duration(seconds: task.duration) + sessionDuration;
+      final sessionDuration = task.sessionStartTime != null
+          ? DateTime.now().difference(task.sessionStartTime!)
+          : Duration.zero;
+      final newTotalDuration =
+          Duration(seconds: task.duration) + sessionDuration;
 
       await SupabaseService().updateTaskStatus(
         task.taskId.toString(),
@@ -74,16 +88,19 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
     } catch (e) {
       _showErrorSnackBar('Failed to pause task: ${e.toString()}');
     } finally {
-      if(mounted) setState(() => _isUpdating = false);
+      if (mounted) setState(() => _isUpdating = false);
     }
   }
 
+  // Completes a service task.
   Future<void> _completeTask(ServiceTask task) async {
     setState(() => _isUpdating = true);
     try {
       Duration finalDuration = Duration(seconds: task.duration);
       if (task.status == 'In Progress' && task.sessionStartTime != null) {
-        final sessionDuration = DateTime.now().difference(task.sessionStartTime!);
+        final sessionDuration = DateTime.now().difference(
+          task.sessionStartTime!,
+        );
         finalDuration += sessionDuration;
       }
 
@@ -98,27 +115,32 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
     } catch (e) {
       _showErrorSnackBar('Failed to complete task: ${e.toString()}');
     } finally {
-      if(mounted) setState(() => _isUpdating = false);
+      if (mounted) setState(() => _isUpdating = false);
     }
   }
 
   // --- General UI and Status Logic ---
 
+  // Shows a success snackbar
   void _showSuccessSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message), backgroundColor: Colors.green),
     );
   }
 
+  // Shows an error snackbar.
   void _showErrorSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message), backgroundColor: Colors.red),
     );
   }
 
+  // Refreshes the job details.
   Future<void> _refreshJobDetails() async {
     try {
-      final freshJobDetails = await SupabaseService().getSingleJobDetails(_jobDetails.id);
+      final freshJobDetails = await SupabaseService().getSingleJobDetails(
+        _jobDetails.id,
+      );
       if (mounted) {
         setState(() {
           _jobDetails = freshJobDetails;
@@ -129,6 +151,7 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
     }
   }
 
+  // Shows a confirmation dialog before cancelling a job.
   void _showCancelConfirmationDialog() {
     showDialog(
       context: context,
@@ -154,14 +177,17 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
     );
   }
 
+  // Shows a dialog to change the job status.
   void _showChangeStatusDialog() {
     const Map<String, List<String>> statusTransitions = {
+      //Maps each status to the statuses it can move to
       'Pending': ['In Progress', 'Cancelled'],
       'In Progress': ['On Hold', 'Completed', 'Cancelled'],
       'On Hold': ['In Progress', 'Cancelled'],
     };
 
     final currentStatus = _jobDetails.status;
+    //If there is non valid next statuses then it will defaults to empty list
     final availableTransitions = statusTransitions[currentStatus] ?? [];
 
     showDialog(
@@ -183,9 +209,12 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
                     }
 
                     return ListTile(
-                      title: Text(title,
-                          style: TextStyle(
-                              color: isEnabled ? Colors.black : Colors.grey)),
+                      title: Text(
+                        title,
+                        style: TextStyle(
+                          color: isEnabled ? Colors.black : Colors.grey,
+                        ),
+                      ),
                       onTap: isEnabled
                           ? () {
                               Navigator.of(context).pop();
@@ -204,6 +233,7 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
     );
   }
 
+  // Updates the job status.
   Future<void> _updateStatus(String newStatus) async {
     setState(() {
       _isUpdating = true;
@@ -211,17 +241,18 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
 
     try {
       if (newStatus == 'On Hold') {
-        final tasksToPause = _jobDetails.requestedServices
-            .where((task) => task.status == 'In Progress');
+        final tasksToPause = _jobDetails.requestedServices.where(
+          //To find which task status is 'In Progress'
+          (task) => task.status == 'In Progress',
+        );
         for (final task in tasksToPause) {
           await _pauseTask(task); // Use the new handler
         }
       }
 
       await SupabaseService().updateJobStatus(_jobDetails.id, newStatus);
-      await _refreshJobDetails();
+      await _refreshJobDetails(); //To reload the job details from the backend
       _showSuccessSnackBar('Status updated to $newStatus');
-
     } catch (e) {
       _showErrorSnackBar('Error updating status: ${e.toString()}');
     } finally {
@@ -233,6 +264,7 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
     }
   }
 
+  // Formats a date for the Vehicle Service History
   String _formatDate(DateTime date) {
     final now = DateTime.now();
     final difference = now.difference(date).inDays;
@@ -251,6 +283,7 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
     }
   }
 
+  //Main build
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -285,16 +318,15 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
           ),
           if (_isUpdating)
             Container(
-              color: Colors.black.withOpacity(0.5),
-              child: const Center(
-                child: CircularProgressIndicator(),
-              ),
+              color: Colors.black.withValues(alpha: 0.5),
+              child: const Center(child: CircularProgressIndicator()),
             ),
         ],
       ),
     );
   }
 
+  // Header widgets
   Widget _buildJobDetailsHeader() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
@@ -334,6 +366,7 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
     );
   }
 
+  // Customer section of the job details page
   Widget _buildCustomerSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -397,6 +430,7 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
     );
   }
 
+  //Vehicle section of the job details page
   Widget _buildVehicleSection() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -444,6 +478,7 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
     );
   }
 
+  //Job status section of the job details page
   Widget _buildJobStatusSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -479,6 +514,7 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
     );
   }
 
+  //Job description section of the job details page
   Widget _buildJobDescriptionSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -505,6 +541,7 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
     );
   }
 
+  //Requested services section of the job details page
   Widget _buildRequestedServicesSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -533,6 +570,7 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
     );
   }
 
+  //Assigned parts section of the job details page
   Widget _buildAssignedPartsSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -584,6 +622,7 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
     );
   }
 
+  //Remarks section of the job details page
   Widget _buildRemarksSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -649,6 +688,7 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
     );
   }
 
+  //Vehicle service history section of the job details page
   Widget _buildVehicleServiceHistorySection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -751,9 +791,11 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
     );
   }
 
+  //Action buttons at the bottom of the job details page
   Widget _buildActionButtons() {
-    // Hide button if job is in a terminal state
-    if (_jobDetails.status == 'Completed' || _jobDetails.status == 'Cancelled') {
+    // Hide button if job is completed or cancelled
+    if (_jobDetails.status == 'Completed' ||
+        _jobDetails.status == 'Cancelled') {
       return const SizedBox.shrink(); // Return an empty widget
     }
 
