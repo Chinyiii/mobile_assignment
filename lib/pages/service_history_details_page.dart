@@ -206,13 +206,6 @@ class _ServiceHistoryDetailsPageState extends State<ServiceHistoryDetailsPage> {
                               color: Color(0xFF121417),
                             ),
                           ),
-                          Text(
-                            widget.serviceHistoryItem.timeElapsed,
-                            style: const TextStyle(
-                              fontSize: 16,
-                              color: Color(0xFF121417),
-                            ),
-                          ),
                         ],
                       ),
                     ),
@@ -387,82 +380,25 @@ class _ServiceHistoryDetailsPageState extends State<ServiceHistoryDetailsPage> {
                         ),
                       ),
                     ),
-                    ...widget.serviceHistoryItem.remarks.asMap().entries.map(
-                      (entry) => Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
-                        ),
-                        child: Row(
-                          children: [
-                            // Remark Icon
-                            Container(
-                              width: 48,
-                              height: 48,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(8),
-                                color: const Color(0xFFF2F2F5),
-                              ),
-                              child: const Icon(
-                                Icons.note,
-                                color: Color(0xFF121417),
-                                size: 24,
-                              ),
-                            ),
-
-                            const SizedBox(width: 16),
-
-                            // Remark Info
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Note ${entry.key + 1}',
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w500,
-                                      color: Color(0xFF121417),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    entry.value.text,
-                                    style: const TextStyle(
-                                      fontSize: 14,
-                                      color: Color(0xFF6B7582),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-
-                    // Photos Section
-                    if (widget.serviceHistoryItem.photos.isNotEmpty) ...[
+                    if (widget.serviceHistoryItem.remarks.isEmpty)
                       const Padding(
-                        padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
+                        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                         child: Text(
-                          'Photos',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w700,
-                            color: Color(0xFF121417),
-                          ),
+                          'No remarks for this service.',
+                          style: TextStyle(fontSize: 14, color: Color(0xFF6B7582)),
                         ),
-                      ),
-                      ...widget.serviceHistoryItem.photos.asMap().entries.map(
-                        (entry) => Padding(
+                      )
+                    else
+                      ...widget.serviceHistoryItem.remarks.map(
+                        (remark) => Padding(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 16,
                             vertical: 8,
                           ),
                           child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              // Photo Icon
+                              // Remark Icon
                               Container(
                                 width: 48,
                                 height: 48,
@@ -471,35 +407,48 @@ class _ServiceHistoryDetailsPageState extends State<ServiceHistoryDetailsPage> {
                                   color: const Color(0xFFF2F2F5),
                                 ),
                                 child: const Icon(
-                                  Icons.photo,
+                                  Icons.note,
                                   color: Color(0xFF121417),
                                   size: 24,
                                 ),
                               ),
-
                               const SizedBox(width: 16),
-
-                              // Photo Info
+                              // Remark Info
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(
-                                      'Photo ${entry.key + 1}',
-                                      style: const TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w500,
-                                        color: Color(0xFF121417),
+                                    if (remark.text.trim().isNotEmpty)
+                                      Text(
+                                        remark.text,
+                                        style: const TextStyle(
+                                          fontSize: 14,
+                                          color: Color(0xFF6B7582),
+                                        ),
                                       ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      entry.value,
-                                      style: const TextStyle(
-                                        fontSize: 14,
-                                        color: Color(0xFF6B7582),
+                                    const SizedBox(height: 8),
+                                    if (remark.imageUrls.isNotEmpty)
+                                      Wrap(
+                                        spacing: 8,
+                                        runSpacing: 8,
+                                        children: remark.imageUrls.map((url) {
+                                          return ClipRRect(
+                                            borderRadius: BorderRadius.circular(8),
+                                            child: Image.network(
+                                              url,
+                                              width: 70,
+                                              height: 70,
+                                              fit: BoxFit.cover,
+                                              errorBuilder: (context, error, stackTrace) => Container(
+                                                width: 70,
+                                                height: 70,
+                                                color: Colors.grey[300],
+                                                child: const Icon(Icons.broken_image, size: 24),
+                                              ),
+                                            ),
+                                          );
+                                        }).toList(),
                                       ),
-                                    ),
                                   ],
                                 ),
                               ),
@@ -507,7 +456,6 @@ class _ServiceHistoryDetailsPageState extends State<ServiceHistoryDetailsPage> {
                           ),
                         ),
                       ),
-                    ],
 
                     const SizedBox(height: 20),
                   ],

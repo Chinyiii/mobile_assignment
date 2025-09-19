@@ -73,6 +73,7 @@ class _RemarkViewHeader extends StatelessWidget {
               ),
             ),
           ),
+          const SizedBox(width: 48), // Spacer for centering
         ],
       ),
     );
