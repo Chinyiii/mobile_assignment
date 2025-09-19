@@ -1,7 +1,7 @@
 enum JobStatus { assigned, inProgress, completed }
 
 class Job {
-  final String id;
+  final int id;
   final String title;
   final String vehicle;
   final JobStatus status;

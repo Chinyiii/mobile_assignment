@@ -50,6 +50,7 @@ class ServiceTask {
   }) {
     return ServiceTask(
       taskId: taskId,
+
       serviceName: serviceName,
       status: status ?? this.status,
       duration: duration ?? this.duration,

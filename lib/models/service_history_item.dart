@@ -1,5 +1,5 @@
 class ServiceHistoryItem {
-  final String id;
+  final int id;
   final String plateNumber;
   final String customerName;
   final String customerPhone;

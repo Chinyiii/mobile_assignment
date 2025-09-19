@@ -1,6 +1,8 @@
 import 'package:mobile_assignment/models/service_history_item.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:mobile_assignment/models/job_details.dart';
+import 'dart:typed_data';
+import 'package:uuid/uuid.dart';
 
 import '../models/service_task.dart';
 
@@ -10,33 +12,26 @@ class SupabaseService {
   //Chinyi
   Future<List<JobDetails>> getJobDetails() async {
     final response = await supabase.from('jobs').select('''
-          job_id,
-          job_description,
-          status,
-          start_time,
-          end_time,
-          created_at,
-          users:customer_id ( name, phone_number ),
-          vehicles:vehicle_id ( vehicle_name, plate_number ),
-          job_tasks ( 
-            task_id,
-            service_id,
-            status,
-            duration,
-            start_time,
-            end_time,
-            session_start_time,
-            services:service_id ( service_name )
-      ),
-          job_parts ( parts:part_id ( part_name ) ),
-          remarks ( text, created_at )
-        ''');
+      job_id,
+      job_description,
+      status,
+      start_time,
+      end_time,
+      created_at,
+      sign_off_url,
+      users:customer_id ( name, phone_number ),
+      vehicles:vehicle_id ( vehicle_name, plate_number ),
+      job_tasks ( task_id, service_id, status, duration, start_time, end_time, session_start_time, services:service_id ( service_name ) ),
+      job_parts ( parts:part_id ( part_name ) ),
+      remarks ( text, created_at )
+    ''');
+
 
     final List<JobDetails> jobDetailsList = [];
     for (final job in response) {
       jobDetailsList.add(
         JobDetails(
-          id: job['job_id'].toString(),
+          id: job['job_id'],
           customerName: job['users']['name'],
           customerPhone: job['users']['phone_number'],
           vehicle: job['vehicles']['vehicle_name'],
@@ -48,7 +43,7 @@ class SupabaseService {
               taskId: jt['task_id'] ?? 0,
               serviceName: service?['service_name'] ?? 'Unknown',
               status: jt['status'] ?? 'Not Started',
-              duration: _parseDurationFromInterval(jt['duration']) ?? 0,
+              duration: _parseDurationFromInterval(jt['duration']),
               startTime: jt['start_time'] != null
                   ? DateTime.parse(jt['start_time'])
                   : null,
@@ -61,14 +56,14 @@ class SupabaseService {
             );
           }).toList(),
           assignedParts:
-              (job['job_parts'] as List?)
-                  ?.map((jp) => jp['parts']['part_name'] as String)
-                  .toList() ??
+          (job['job_parts'] as List?)
+              ?.map((jp) => jp['parts']['part_name'] as String)
+              .toList() ??
               [],
           remarks:
-              (job['remarks'] as List?)
-                  ?.map((r) => r['text'] as String)
-                  .toList() ??
+          (job['remarks'] as List?)
+              ?.map((r) => r['text'] as String)
+              .toList() ??
               [],
           status: job['status'],
           timeElapsed: JobDetails.calculateTimeElapsed(
@@ -76,6 +71,7 @@ class SupabaseService {
             job['end_time'],
           ),
           createdAt: DateTime.parse(job['created_at']),
+          signatureUrl: job['sign_off_url'],
         ),
       );
     }
@@ -116,7 +112,7 @@ class SupabaseService {
     for (final job in response) {
       jobDetailsList.add(
         JobDetails(
-          id: job['job_id'].toString(),
+          id: job['job_id'],
           customerName: job['users']['name'],
           customerPhone: job['users']['phone_number'],
           vehicle: job['vehicles']['vehicle_name'],
@@ -128,7 +124,7 @@ class SupabaseService {
               taskId: jt['task_id'] ?? 0,
               serviceName: service?['service_name'] ?? 'Unknown',
               status: jt['status'] ?? 'Not Started',
-              duration: _parseDurationFromInterval(jt['duration']) ?? 0,
+              duration: _parseDurationFromInterval(jt['duration']),
               startTime: jt['start_time'] != null
                   ? DateTime.parse(jt['start_time'])
                   : null,
@@ -141,14 +137,14 @@ class SupabaseService {
             );
           }).toList(),
           assignedParts:
-              (job['job_parts'] as List?)
-                  ?.map((jp) => jp['parts']['part_name'] as String)
-                  .toList() ??
+          (job['job_parts'] as List?)
+              ?.map((jp) => jp['parts']['part_name'] as String)
+              .toList() ??
               [],
           remarks:
-              (job['remarks'] as List?)
-                  ?.map((r) => r['text'] as String)
-                  .toList() ??
+          (job['remarks'] as List?)
+              ?.map((r) => r['text'] as String)
+              .toList() ??
               [],
           status: job['status'],
           timeElapsed: JobDetails.calculateTimeElapsed(
@@ -163,34 +159,38 @@ class SupabaseService {
     return jobDetailsList;
   }
 
-  Future<JobDetails> getSingleJobDetails(String jobId) async {
+  Future<JobDetails> getSingleJobDetails(int jobId) async {
     final response = await supabase.from('jobs').select('''
-          job_id,
-          job_description,
+        job_id,
+        job_description,
+        status,
+        start_time,
+        end_time,
+        created_at,
+        sign_off_url,
+        users:customer_id ( name, phone_number ),
+        vehicles:vehicle_id ( vehicle_name, plate_number ),
+        job_tasks ( 
+          task_id,
+          service_id,
           status,
+          duration,
           start_time,
           end_time,
-          created_at,
-          users:customer_id ( name, phone_number ),
-          vehicles:vehicle_id ( vehicle_name, plate_number ),
-          job_tasks ( 
-            task_id,
-            service_id,
-            status,
-            duration,
-            start_time,
-            end_time,
-            session_start_time,
-            services:service_id ( service_name )
-      ),
-          job_parts ( parts:part_id ( part_name ) ),
-          remarks ( text, created_at )
-        ''').eq('job_id', int.parse(jobId)).single();
+          session_start_time,
+          services:service_id ( service_name )
+    ),
+        job_parts ( parts:part_id ( part_name ) ),
+        remarks ( text, created_at )
+      ''').eq('job_id', jobId).single();
 
     final job = response;
 
+    print('Raw job data: $job');
+    print('sign_off_url from database: ${job['sign_off_url']}');
+
     return JobDetails(
-      id: job['job_id'].toString(),
+      id: job['job_id'],
       customerName: job['users']['name'],
       customerPhone: job['users']['phone_number'],
       vehicle: job['vehicles']['vehicle_name'],
@@ -202,7 +202,7 @@ class SupabaseService {
           taskId: jt['task_id'] ?? 0,
           serviceName: service?['service_name'] ?? 'Unknown',
           status: jt['status'] ?? 'Not Started',
-          duration: _parseDurationFromInterval(jt['duration']) ?? 0,
+          duration: _parseDurationFromInterval(jt['duration']),
           startTime: jt['start_time'] != null
               ? DateTime.parse(jt['start_time'])
               : null,
@@ -215,14 +215,14 @@ class SupabaseService {
         );
       }).toList(),
       assignedParts:
-          (job['job_parts'] as List?)
-              ?.map((jp) => jp['parts']['part_name'] as String)
-              .toList() ??
+      (job['job_parts'] as List?)
+          ?.map((jp) => jp['parts']['part_name'] as String)
+          .toList() ??
           [],
       remarks:
-          (job['remarks'] as List?)
-              ?.map((r) => r['text'] as String)
-              .toList() ??
+      (job['remarks'] as List?)
+          ?.map((r) => r['text'] as String)
+          .toList() ??
           [],
       status: job['status'],
       timeElapsed: _calculateTimeElapsed(
@@ -230,10 +230,11 @@ class SupabaseService {
         job['end_time'],
       ),
       createdAt: DateTime.parse(job['created_at']),
+      signatureUrl: job['sign_off_url'],
     );
   }
 
-  Future<void> updateJobStatus(String jobId, String status) async {
+  Future<void> updateJobStatus(int jobId, String status) async {
     await supabase.from('jobs').update({'status': status}).eq('job_id', jobId);
   }
 
@@ -289,40 +290,40 @@ class SupabaseService {
         if (job != null) {
           serviceHistoryList.add(
             ServiceHistoryItem(
-              id: job['job_id'].toString(),
+              id: job['job_id'],
               customerName: job['users']['name'],
               customerPhone: job['users']['phone_number'],
               vehicle: job['vehicles']['vehicle_name'],
               plateNumber: job['vehicles']['plate_number'],
               jobDescription: job['job_description'],
               requestedServices:
-                  (job['job_tasks'] as List?)
-                      ?.map((js) => js['services']['service_name'] as String)
-                      .toList() ??
+              (job['job_tasks'] as List?)
+                  ?.map((js) => js['services']['service_name'] as String)
+                  .toList() ??
                   [],
               assignedParts:
-                  (job['job_parts'] as List?)
-                      ?.map((jp) => jp['parts']['part_name'] as String)
-                      .toList() ??
+              (job['job_parts'] as List?)
+                  ?.map((jp) => jp['parts']['part_name'] as String)
+                  .toList() ??
                   [],
               remarks:
-                  (job['remarks'] as List?)
-                      ?.map((r) => r['text'] as String)
-                      .toList() ??
+              (job['remarks'] as List?)
+                  ?.map((r) => r['text'] as String)
+                  .toList() ??
                   [],
               status: job['status'],
               serviceDate: DateTime.parse(historyItem['service_date']),
               serviceType:
-                  (job['job_tasks'] as List?)
-                      ?.map((js) => js['services']['service_name'] as String)
-                      .join(', ') ??
+              (job['job_tasks'] as List?)
+                  ?.map((js) => js['services']['service_name'] as String)
+                  .join(', ') ??
                   '',
               timeElapsed: JobDetails.calculateTimeElapsed(
                 job['start_time'],
                 job['end_time'],
               ),
               photos:
-                  [], // Photos are in a separate table, not directly linked here.
+              [], // Photos are in a separate table, not directly linked here.
             ),
           );
         }
@@ -348,13 +349,13 @@ class SupabaseService {
   }
 
   Future<void> updateTaskStatus(
-    String taskId,
-    String status, {
-    DateTime? startTime,
-    DateTime? endTime,
-    Duration? duration,
-    DateTime? sessionStartTime,
-  }) async {
+      int taskId,
+      String status, {
+        DateTime? startTime,
+        DateTime? endTime,
+        Duration? duration,
+        DateTime? sessionStartTime,
+      }) async {
     Map<String, dynamic> updateData = {'status': status};
 
     if (startTime != null) {
@@ -371,7 +372,7 @@ class SupabaseService {
       final minutes = (duration.inMinutes % 60);
       final seconds = (duration.inSeconds % 60);
       updateData['duration'] =
-          '${hours}:${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+      '$hours:${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
     }
 
     // Handle session_start_time
@@ -385,7 +386,7 @@ class SupabaseService {
     await supabase
         .from('job_tasks')
         .update(updateData)
-        .eq('task_id', int.parse(taskId));
+        .eq('task_id', taskId);
   }
 
   // Helper method to parse PostgreSQL interval to seconds
@@ -425,4 +426,31 @@ class SupabaseService {
       return 0;
     }
   }
+
+  Future<void> saveJobSignOff(int jobId, Uint8List signatureBytes) async {
+    final String date = DateTime.now().toIso8601String().split('T').first;
+    final String uniqueId = const Uuid().v4();
+    final String filePath = 'signatures/job_${jobId}_${date}_$uniqueId.png';
+
+    // Upload into private bucket
+    await supabase.storage
+        .from('job_asset_storage')
+        .uploadBinary(filePath, signatureBytes,
+        fileOptions: const FileOptions(contentType: 'image/png'));
+
+    // Save only the file path in DB
+    await supabase
+        .from('jobs')
+        .update({'sign_off_url': filePath})
+        .eq('job_id', jobId);
+  }
+
+  Future<String?> getSignedUrl(String filePath) async {
+    final response = await supabase.storage
+        .from('job_asset_storage')
+        .createSignedUrl(filePath, 60 * 60); // valid for 1 hour
+    return response;
+  }
+
+
 }

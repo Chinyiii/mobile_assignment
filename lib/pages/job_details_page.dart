@@ -2,13 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:mobile_assignment/models/job_details.dart';
 import 'package:mobile_assignment/models/service_history_item.dart';
 import 'package:mobile_assignment/pages/service_history_details_page.dart';
+import 'package:mobile_assignment/pages/sign-off-page.dart';
 import 'package:mobile_assignment/services/supabase_service.dart';
 import '../widgets/service_task_widget.dart';
 import 'package:mobile_assignment/models/service_task.dart';
 
-// Displays the details of a specific job.
 class JobDetailsPage extends StatefulWidget {
-  // The job details to be displayed.
   final JobDetails jobDetails;
 
   const JobDetailsPage({super.key, required this.jobDetails});
@@ -18,16 +17,12 @@ class JobDetailsPage extends StatefulWidget {
 }
 
 class _JobDetailsPageState extends State<JobDetailsPage> {
-  // The current job details.
   late JobDetails _jobDetails;
-
-  // A future that resolves to a list of service history items for the vehicle.
   late Future<List<ServiceHistoryItem>> _serviceHistoryFuture;
-
-  // Whether the page is currently updating.
   bool _isUpdating = false;
+  bool _showSignature = false;
 
-  // Helper getter to check if all tasks are completed.
+  // Helper getter to check if all tasks are completed
   bool get _areAllTasksCompleted =>
       _jobDetails.requestedServices.every((task) => task.status == 'Completed');
 
@@ -42,19 +37,16 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
 
   // --- Task Action Handlers ---
 
-  // Starts a service task.
   Future<void> _startTask(ServiceTask task) async {
     setState(() => _isUpdating = true);
     try {
       final now = DateTime.now();
       DateTime? startTime =
           task.startTime; // Keep original start time if it exists
-      if (startTime == null) {
-        startTime = now; // Set start time if it's the first time
-      }
+      startTime ??= now;
 
       await SupabaseService().updateTaskStatus(
-        task.taskId.toString(),
+        task.taskId,
         'In Progress',
         startTime: startTime,
         sessionStartTime: now, // Always set session start time on play
@@ -67,7 +59,6 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
     }
   }
 
-  // Pauses a service task.
   Future<void> _pauseTask(ServiceTask task) async {
     setState(() => _isUpdating = true);
     try {
@@ -79,7 +70,7 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
           Duration(seconds: task.duration) + sessionDuration;
 
       await SupabaseService().updateTaskStatus(
-        task.taskId.toString(),
+        task.taskId,
         'Paused',
         duration: newTotalDuration,
         sessionStartTime: null, // Clear session start time on pause
@@ -92,7 +83,6 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
     }
   }
 
-  // Completes a service task.
   Future<void> _completeTask(ServiceTask task) async {
     setState(() => _isUpdating = true);
     try {
@@ -105,7 +95,7 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
       }
 
       await SupabaseService().updateTaskStatus(
-        task.taskId.toString(),
+        task.taskId,
         'Completed',
         endTime: DateTime.now(),
         duration: finalDuration,
@@ -121,37 +111,47 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
 
   // --- General UI and Status Logic ---
 
-  // Shows a success snackbar
   void _showSuccessSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message), backgroundColor: Colors.green),
     );
   }
 
-  // Shows an error snackbar.
   void _showErrorSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message), backgroundColor: Colors.red),
     );
   }
 
-  // Refreshes the job details.
   Future<void> _refreshJobDetails() async {
     try {
+      print('Refreshing job details for job ID: ${_jobDetails.id}');
       final freshJobDetails = await SupabaseService().getSingleJobDetails(
         _jobDetails.id,
       );
+
+      print('Fresh job details received:');
+      print('- Status: ${freshJobDetails.status}');
+      print('- Signature URL: ${freshJobDetails.signatureUrl}');
+
       if (mounted) {
         setState(() {
+          print('Updating _jobDetails state...');
+          final oldSignatureUrl = _jobDetails.signatureUrl;
           _jobDetails = freshJobDetails;
+          print(
+            'State updated. Old signature: $oldSignatureUrl, New signature: ${_jobDetails.signatureUrl}',
+          );
         });
+      } else {
+        print('Widget not mounted, skipping state update');
       }
     } catch (e) {
+      print('Error in _refreshJobDetails: $e');
       _showErrorSnackBar('Failed to refresh job details.');
     }
   }
 
-  // Shows a confirmation dialog before cancelling a job.
   void _showCancelConfirmationDialog() {
     showDialog(
       context: context,
@@ -177,18 +177,21 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
     );
   }
 
-  // Shows a dialog to change the job status.
   void _showChangeStatusDialog() {
     const Map<String, List<String>> statusTransitions = {
-      //Maps each status to the statuses it can move to
       'Pending': ['In Progress', 'Cancelled'],
       'In Progress': ['On Hold', 'Completed', 'Cancelled'],
       'On Hold': ['In Progress', 'Cancelled'],
     };
 
     final currentStatus = _jobDetails.status;
-    //If there is non valid next statuses then it will defaults to empty list
-    final availableTransitions = statusTransitions[currentStatus] ?? [];
+    var availableTransitions = statusTransitions[currentStatus] ?? [];
+
+    if (_areAllTasksCompleted) {
+      availableTransitions = availableTransitions
+          .where((s) => s != 'On Hold')
+          .toList();
+    }
 
     showDialog(
       context: context,
@@ -233,7 +236,6 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
     );
   }
 
-  // Updates the job status.
   Future<void> _updateStatus(String newStatus) async {
     setState(() {
       _isUpdating = true;
@@ -242,7 +244,6 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
     try {
       if (newStatus == 'On Hold') {
         final tasksToPause = _jobDetails.requestedServices.where(
-          //To find which task status is 'In Progress'
           (task) => task.status == 'In Progress',
         );
         for (final task in tasksToPause) {
@@ -251,7 +252,7 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
       }
 
       await SupabaseService().updateJobStatus(_jobDetails.id, newStatus);
-      await _refreshJobDetails(); //To reload the job details from the backend
+      await _refreshJobDetails();
       _showSuccessSnackBar('Status updated to $newStatus');
     } catch (e) {
       _showErrorSnackBar('Error updating status: ${e.toString()}');
@@ -264,7 +265,6 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
     }
   }
 
-  // Formats a date for the Vehicle Service History
   String _formatDate(DateTime date) {
     final now = DateTime.now();
     final difference = now.difference(date).inDays;
@@ -283,7 +283,6 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
     }
   }
 
-  //Main build
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -318,7 +317,7 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
           ),
           if (_isUpdating)
             Container(
-              color: Colors.black.withValues(alpha: 0.5),
+              color: Colors.black.withOpacity(0.5),
               child: const Center(child: CircularProgressIndicator()),
             ),
         ],
@@ -326,7 +325,6 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
     );
   }
 
-  // Header widgets
   Widget _buildJobDetailsHeader() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
@@ -366,7 +364,6 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
     );
   }
 
-  // Customer section of the job details page
   Widget _buildCustomerSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -430,7 +427,6 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
     );
   }
 
-  //Vehicle section of the job details page
   Widget _buildVehicleSection() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -478,7 +474,6 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
     );
   }
 
-  //Job status section of the job details page
   Widget _buildJobStatusSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -514,7 +509,6 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
     );
   }
 
-  //Job description section of the job details page
   Widget _buildJobDescriptionSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -541,7 +535,6 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
     );
   }
 
-  //Requested services section of the job details page
   Widget _buildRequestedServicesSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -560,6 +553,7 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
         ..._jobDetails.requestedServices.map(
           (task) => ServiceTaskWidget(
             task: task,
+            jobStatus: _jobDetails.status,
             isUpdating: _isUpdating,
             onStart: () => _startTask(task),
             onPause: () => _pauseTask(task),
@@ -570,7 +564,6 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
     );
   }
 
-  //Assigned parts section of the job details page
   Widget _buildAssignedPartsSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -622,7 +615,6 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
     );
   }
 
-  //Remarks section of the job details page
   Widget _buildRemarksSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -688,7 +680,6 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
     );
   }
 
-  //Vehicle service history section of the job details page
   Widget _buildVehicleServiceHistorySection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -791,14 +782,167 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
     );
   }
 
-  //Action buttons at the bottom of the job details page
   Widget _buildActionButtons() {
-    // Hide button if job is completed or cancelled
-    if (_jobDetails.status == 'Completed' ||
-        _jobDetails.status == 'Cancelled') {
-      return const SizedBox.shrink(); // Return an empty widget
+    // If job is Cancelled, hide everything
+    if (_jobDetails.status == 'Cancelled') {
+      return const SizedBox.shrink();
     }
 
+    // ✅ If job is Completed
+    if (_jobDetails.status == 'Completed') {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            if (_jobDetails.signatureUrl == null ||
+                _jobDetails.signatureUrl!.isEmpty)
+              GestureDetector(
+                onTap: () async {
+                  final result = await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          DigitalSignOffPage(jobId: _jobDetails.id),
+                    ),
+                  );
+
+                  if (result == true) {
+                    print(
+                      'Signature page returned success, refreshing job details...',
+                    );
+
+                    // Since the signature page only returns true when signature is confirmed saved,
+                    // we can do a simple refresh with shorter delay
+                    await Future.delayed(const Duration(milliseconds: 500));
+
+                    try {
+                      final freshJobDetails = await SupabaseService()
+                          .getSingleJobDetails(_jobDetails.id);
+                      print('Fresh job details loaded');
+                      print(
+                        'New signature URL: ${freshJobDetails.signatureUrl}',
+                      );
+
+                      if (mounted) {
+                        setState(() {
+                          _jobDetails = freshJobDetails;
+                        });
+
+                        // Show success message to user
+                        _showSuccessSnackBar('Signature saved successfully!');
+                      }
+                    } catch (e) {
+                      print('Error refreshing job details: $e');
+                      _showErrorSnackBar(
+                        'Signature saved but failed to refresh display.',
+                      );
+                    }
+                  }
+                },
+                child: Container(
+                  height: 40,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    color: const Color(0xFFDEE8F2),
+                  ),
+                  child: const Center(
+                    child: Text(
+                      'Customer Sign-Off',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF121417),
+                      ),
+                    ),
+                  ),
+                ),
+              )
+            else
+              Column(
+                children: [
+                  const Text(
+                    "Customer Sign-Off",
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                      color: Color(0xFF121417),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+
+                  // 👇 Updated toggle button with matching design
+                  GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _showSignature = !_showSignature;
+                      });
+                    },
+                    child: Container(
+                      height: 40,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        color: const Color(0xFFDEE8F2),
+                      ),
+                      child: Center(
+                        child: Text(
+                          _showSignature ? "Hide Signature" : "Show Signature",
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF121417),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 10),
+
+                  // 👇 Only build FutureBuilder if toggled ON
+                  if (_showSignature)
+                    FutureBuilder<String?>(
+                      future: SupabaseService().getSignedUrl(
+                        _jobDetails.signatureUrl!,
+                      ),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return const CircularProgressIndicator();
+                        }
+                        if (snapshot.hasError ||
+                            !snapshot.hasData ||
+                            snapshot.data == null) {
+                          return const Text(
+                            "Failed to load signature",
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Color(0xFF6B7582),
+                            ),
+                          );
+                        }
+                        return Container(
+                          margin: const EdgeInsets.only(top: 10),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: const Color(0xFFF2F2F5)),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: Image.network(
+                              snapshot.data!,
+                              height: 150,
+                              fit: BoxFit.contain,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                ],
+              ),
+          ],
+        ),
+      );
+    }
     return Container(
       padding: const EdgeInsets.all(16),
       child: Row(
