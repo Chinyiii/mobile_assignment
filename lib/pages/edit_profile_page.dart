@@ -17,8 +17,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
   final authService = AuthService();
   final nameController = TextEditingController();
   final phoneController = TextEditingController();
-  final emailController = TextEditingController(); // controller for email
-  final addressController = TextEditingController(); // new controller for address
+  final emailController = TextEditingController();
+  final addressController = TextEditingController();
 
   String? base64Image;
 
@@ -34,16 +34,16 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
     final response = await supabase
         .from('users')
-        .select('name, phone_number, address, profile_pic') // include address
+        .select('name, phone_number, address, profile_pic')
         .eq('email', email as Object)
         .maybeSingle();
 
     if (mounted) {
       setState(() {
-        emailController.text = email; // set email into controller
+        emailController.text = email;
         nameController.text = response?['name'] ?? '';
         phoneController.text = response?['phone_number'] ?? '';
-        addressController.text = response?['address'] ?? ''; // set address
+        addressController.text = response?['address'] ?? '';
         base64Image = response?['profile_pic'];
       });
     }
@@ -69,7 +69,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
     await supabase.from('users').update({
       'name': nameController.text,
       'phone_number': phoneController.text,
-      'address': addressController.text, // save address
+      'address': addressController.text,
       'profile_pic': base64Image,
     }).eq('email', email);
 
@@ -93,65 +93,140 @@ class _EditProfilePageState extends State<EditProfilePage> {
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Edit Profile"),
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Header
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+              child: Row(
+                children: [
+                  GestureDetector(
+                    onTap: () => Navigator.pop(context),
+                    child: Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(24),
+                        color: const Color(0xFFF0F2F5),
+                      ),
+                      child: const Icon(
+                        Icons.arrow_back,
+                        color: Color(0xFF121417),
+                        size: 24,
+                      ),
+                    ),
+                  ),
+                  const Expanded(
+                    child: Text(
+                      'Edit Profile',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF121417),
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                  const SizedBox(width: 48), // Spacer for centering
+                ],
+              ),
+            ),
+            Expanded(
+              child: SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    children: [
+                      GestureDetector(
+                        onTap: _pickImage,
+                        child: CircleAvatar(
+                          radius: 60,
+                          backgroundImage: bytes != null
+                              ? MemoryImage(bytes)
+                              : const AssetImage("assets/images/default_avatar.png")
+                                  as ImageProvider,
+                          child: const Align(
+                            alignment: Alignment.bottomRight,
+                            child: Icon(Icons.camera_alt, color: Colors.white, size: 30),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 32),
+                      _buildTextField(
+                        controller: emailController,
+                        labelText: "Email",
+                        icon: Icons.email,
+                        enabled: false,
+                      ),
+                      const SizedBox(height: 16),
+                      _buildTextField(
+                        controller: nameController,
+                        labelText: "Name",
+                        icon: Icons.person,
+                      ),
+                      const SizedBox(height: 16),
+                      _buildTextField(
+                        controller: phoneController,
+                        labelText: "Phone Number",
+                        icon: Icons.phone,
+                        keyboardType: TextInputType.phone,
+                      ),
+                      const SizedBox(height: 16),
+                      _buildTextField(
+                        controller: addressController,
+                        labelText: "Address",
+                        icon: Icons.home,
+                      ),
+                      const SizedBox(height: 32),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: _saveProfile,
+                          style: ElevatedButton.styleFrom(
+                            foregroundColor: Colors.black,
+                            backgroundColor: const Color(0xFFDEE8F2),
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: const Text("Save"),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              GestureDetector(
-                onTap: _pickImage,
-                child: CircleAvatar(
-                  radius: 60,
-                  backgroundImage: bytes != null
-                      ? MemoryImage(bytes)
-                      : const AssetImage("assets/images/default_avatar.png")
-                  as ImageProvider,
-                ),
-              ),
-              const SizedBox(height: 20),
+    );
+  }
 
-              // Email (uneditable)
-              TextField(
-                controller: emailController,
-                enabled: false,
-                decoration: const InputDecoration(
-                  labelText: "Email",
-                  prefixIcon: Icon(Icons.email),
-                ),
-              ),
-              const SizedBox(height: 10),
-
-              // Name
-              TextField(
-                controller: nameController,
-                decoration: const InputDecoration(labelText: "Name"),
-              ),
-              const SizedBox(height: 10),
-
-              // Phone
-              TextField(
-                controller: phoneController,
-                decoration: const InputDecoration(labelText: "Phone Number"),
-                keyboardType: TextInputType.phone,
-              ),
-              const SizedBox(height: 10),
-
-              // Address
-              TextField(
-                controller: addressController,
-                decoration: const InputDecoration(labelText: "Address"),
-              ),
-              const SizedBox(height: 20),
-
-              ElevatedButton(
-                onPressed: _saveProfile,
-                child: const Text("Save"),
-              ),
-            ],
-          ),
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String labelText,
+    required IconData icon,
+    bool enabled = true,
+    TextInputType keyboardType = TextInputType.text,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFFF0F2F5),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: TextField(
+        controller: controller,
+        enabled: enabled,
+        keyboardType: keyboardType,
+        decoration: InputDecoration(
+          labelText: labelText,
+          prefixIcon: Icon(icon, color: const Color(0xFF61758A)),
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         ),
       ),
     );

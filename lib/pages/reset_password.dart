@@ -93,59 +93,120 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Reset Password")),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              TextFormField(
-                controller: _currentController,
-                obscureText: true,
-                decoration: const InputDecoration(
-                  labelText: "Current Password",
-                  prefixIcon: Icon(Icons.lock),
-                ),
-                validator: (v) => v == null || v.isEmpty ? 'Enter current password' : null,
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Header
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+              child: Row(
+                children: [
+                  GestureDetector(
+                    onTap: () => Navigator.pop(context),
+                    child: Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(24),
+                        color: const Color(0xFFF0F2F5),
+                      ),
+                      child: const Icon(
+                        Icons.arrow_back,
+                        color: Color(0xFF121417),
+                        size: 24,
+                      ),
+                    ),
+                  ),
+                  const Expanded(
+                    child: Text(
+                      'Change Password',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF121417),
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                  const SizedBox(width: 48), // Spacer for centering
+                ],
               ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _newController,
-                obscureText: true,
-                decoration: const InputDecoration(
-                  labelText: "New Password",
-                  prefixIcon: Icon(Icons.lock_outline),
-                ),
-                validator: (v) => v == null || v.length < 6 ? 'Enter at least 6 chars' : null,
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _confirmController,
-                obscureText: true,
-                decoration: const InputDecoration(
-                  labelText: "Confirm New Password",
-                  prefixIcon: Icon(Icons.lock_outline),
-                ),
-                validator: (v) => v == null || v.isEmpty ? 'Confirm your password' : null,
-              ),
-              const SizedBox(height: 30),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _loading ? null : _resetPassword,
-                  child: _loading
-                      ? const CircularProgressIndicator(color: Colors.white)
-                      : const Text("Reset Password"),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
+            ),
+            Expanded(
+              child: SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      children: [
+                        const SizedBox(height: 16),
+                        _buildPasswordField(
+                          controller: _currentController,
+                          labelText: "Current Password",
+                        ),
+                        const SizedBox(height: 16),
+                        _buildPasswordField(
+                          controller: _newController,
+                          labelText: "New Password",
+                          validator: (v) => v == null || v.length < 6 ? 'Enter at least 6 chars' : null,
+                        ),
+                        const SizedBox(height: 16),
+                        _buildPasswordField(
+                          controller: _confirmController,
+                          labelText: "Confirm New Password",
+                        ),
+                        const SizedBox(height: 32),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: _loading ? null : _resetPassword,
+                            style: ElevatedButton.styleFrom(
+                              foregroundColor: Colors.black,
+                              backgroundColor: const Color(0xFFDEE8F2),
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child: _loading
+                                ? const CircularProgressIndicator(color: Colors.white)
+                                : const Text("Change Password"),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildPasswordField({
+    required TextEditingController controller,
+    required String labelText,
+    String? Function(String?)? validator,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFFF0F2F5),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: TextFormField(
+        controller: controller,
+        obscureText: true,
+        decoration: InputDecoration(
+          labelText: labelText,
+          prefixIcon: const Icon(Icons.lock, color: Color(0xFF61758A)),
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        ),
+        validator: validator ?? (v) => v == null || v.isEmpty ? 'Please enter the password' : null,
       ),
     );
   }
