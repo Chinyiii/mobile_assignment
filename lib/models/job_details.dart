@@ -1,7 +1,7 @@
 import 'package:mobile_assignment/models/service_task.dart';
 
 class JobDetails {
-  final String id;
+  final int id;
   final String customerName;
   final String customerPhone;
   final String vehicle;
@@ -13,6 +13,7 @@ class JobDetails {
   final String status;
   final String timeElapsed;
   final DateTime createdAt;
+  final String? signatureUrl;
 
   JobDetails({
     required this.id,
@@ -27,6 +28,7 @@ class JobDetails {
     required this.status,
     required this.timeElapsed,
     required this.createdAt,
+    this.signatureUrl, // 👈 optional, can be null
   });
 
   static String calculateTimeElapsed(String? startTime, String? endTime) {
@@ -39,7 +41,7 @@ class JobDetails {
 
   factory JobDetails.fromJson(Map<String, dynamic> json) {
     return JobDetails(
-      id: json['id'],
+      id: json['job_id'],
       customerName: json['customer_name'],
       customerPhone: json['customer_phone'],
       vehicle: json['vehicle'],
@@ -48,11 +50,12 @@ class JobDetails {
       requestedServices: (json['requested_services'] as List<dynamic>)
           .map((e) => ServiceTask.fromJson(e))
           .toList(),
-      assignedParts: List<String>.from(json['assigned_parts']),
-      remarks: List<String>.from(json['remarks']),
+      assignedParts: List<String>.from(json['assigned_parts'] ?? []),
+      remarks: List<String>.from(json['remarks'] ?? []),
       status: json['status'],
       timeElapsed: json['time_elapsed'],
       createdAt: DateTime.parse(json['created_at']),
+      signatureUrl: json['sign_off_url'],
     );
   }
 }

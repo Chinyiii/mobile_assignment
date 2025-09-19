@@ -173,14 +173,20 @@ class _DashboardPageState extends State<DashboardPage> {
 
   Color _getStatusColor(String status) {
     switch (status) {
+      case 'Pending':
+        return Colors.grey; // Not started
       case 'Assigned':
-        return const Color(0xFF2196F3);
+        return const Color(0xFF2196F3); // Blue
       case 'In Progress':
-        return const Color(0xFFFF9800);
+        return const Color(0xFFFF9800); // Orange
+      case 'On Hold':
+        return const Color(0xFF9C27B0); // Purple
       case 'Completed':
-        return const Color(0xFF4CAF50);
+        return const Color(0xFF4CAF50); // Green
+      case 'Cancelled':
+        return const Color(0xFFF44336); // Red
       default:
-        return Colors.grey;
+        return Colors.black54; // Fallback
     }
   }
 }

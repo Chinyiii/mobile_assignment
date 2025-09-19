@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mobile_assignment/models/job_details.dart';
 import 'package:mobile_assignment/models/service_history_item.dart';
 import 'package:mobile_assignment/pages/service_history_details_page.dart';
+import 'package:mobile_assignment/pages/sign-off-page.dart';
 import 'package:mobile_assignment/services/supabase_service.dart';
 import '../widgets/service_task_widget.dart';
 import 'package:mobile_assignment/models/service_task.dart';
@@ -18,44 +19,217 @@ class JobDetailsPage extends StatefulWidget {
 class _JobDetailsPageState extends State<JobDetailsPage> {
   late JobDetails _jobDetails;
   late Future<List<ServiceHistoryItem>> _serviceHistoryFuture;
+  bool _isUpdating = false;
+  bool _showSignature = false;
+
+  // Helper getter to check if all tasks are completed
+  bool get _areAllTasksCompleted =>
+      _jobDetails.requestedServices.every((task) => task.status == 'Completed');
 
   @override
   void initState() {
     super.initState();
     _jobDetails = widget.jobDetails;
-    _serviceHistoryFuture =
-        SupabaseService().getServiceHistory(_jobDetails.plateNumber);
+    _serviceHistoryFuture = SupabaseService().getServiceHistory(
+      _jobDetails.plateNumber,
+    );
   }
 
-  void _showChangeStatusDialog() {
+  // --- Task Action Handlers ---
+
+  Future<void> _startTask(ServiceTask task) async {
+    setState(() => _isUpdating = true);
+    try {
+      final now = DateTime.now();
+      DateTime? startTime =
+          task.startTime; // Keep original start time if it exists
+      startTime ??= now;
+
+      await SupabaseService().updateTaskStatus(
+        task.taskId,
+        'In Progress',
+        startTime: startTime,
+        sessionStartTime: now, // Always set session start time on play
+      );
+      await _refreshJobDetails();
+    } catch (e) {
+      _showErrorSnackBar('Failed to start task: ${e.toString()}');
+    } finally {
+      if (mounted) setState(() => _isUpdating = false);
+    }
+  }
+
+  Future<void> _pauseTask(ServiceTask task) async {
+    setState(() => _isUpdating = true);
+    try {
+      // Calculate the elapsed time for this session
+      final sessionDuration = task.sessionStartTime != null
+          ? DateTime.now().difference(task.sessionStartTime!)
+          : Duration.zero;
+      final newTotalDuration =
+          Duration(seconds: task.duration) + sessionDuration;
+
+      await SupabaseService().updateTaskStatus(
+        task.taskId,
+        'Paused',
+        duration: newTotalDuration,
+        sessionStartTime: null, // Clear session start time on pause
+      );
+      await _refreshJobDetails();
+    } catch (e) {
+      _showErrorSnackBar('Failed to pause task: ${e.toString()}');
+    } finally {
+      if (mounted) setState(() => _isUpdating = false);
+    }
+  }
+
+  Future<void> _completeTask(ServiceTask task) async {
+    setState(() => _isUpdating = true);
+    try {
+      Duration finalDuration = Duration(seconds: task.duration);
+      if (task.status == 'In Progress' && task.sessionStartTime != null) {
+        final sessionDuration = DateTime.now().difference(
+          task.sessionStartTime!,
+        );
+        finalDuration += sessionDuration;
+      }
+
+      await SupabaseService().updateTaskStatus(
+        task.taskId,
+        'Completed',
+        endTime: DateTime.now(),
+        duration: finalDuration,
+        sessionStartTime: null,
+      );
+      await _refreshJobDetails();
+    } catch (e) {
+      _showErrorSnackBar('Failed to complete task: ${e.toString()}');
+    } finally {
+      if (mounted) setState(() => _isUpdating = false);
+    }
+  }
+
+  // --- General UI and Status Logic ---
+
+  void _showSuccessSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: Colors.green),
+    );
+  }
+
+  void _showErrorSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: Colors.red),
+    );
+  }
+
+  Future<void> _refreshJobDetails() async {
+    try {
+      print('Refreshing job details for job ID: ${_jobDetails.id}');
+      final freshJobDetails = await SupabaseService().getSingleJobDetails(
+        _jobDetails.id,
+      );
+
+      print('Fresh job details received:');
+      print('- Status: ${freshJobDetails.status}');
+      print('- Signature URL: ${freshJobDetails.signatureUrl}');
+
+      if (mounted) {
+        setState(() {
+          print('Updating _jobDetails state...');
+          final oldSignatureUrl = _jobDetails.signatureUrl;
+          _jobDetails = freshJobDetails;
+          print(
+            'State updated. Old signature: $oldSignatureUrl, New signature: ${_jobDetails.signatureUrl}',
+          );
+        });
+      } else {
+        print('Widget not mounted, skipping state update');
+      }
+    } catch (e) {
+      print('Error in _refreshJobDetails: $e');
+      _showErrorSnackBar('Failed to refresh job details.');
+    }
+  }
+
+  void _showCancelConfirmationDialog() {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        Widget buildStatusRadioListTile(String status) {
-          return RadioListTile<String>(
-            title: Text(status),
-            value: status,
-            groupValue: _jobDetails.status,
-            onChanged: (String? value) {
-              if (value != null) {
-                _updateStatus(value);
-              }
-              Navigator.of(context).pop();
-            },
-          );
-        }
-
         return AlertDialog(
-          title: const Text('Change Status'),
+          title: const Text('Cancel Job'),
+          content: const Text('Are you sure you want to cancel this job?'),
+          actions: [
+            TextButton(
+              child: const Text('No'),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+            TextButton(
+              child: const Text('Yes, Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop(); // Close confirmation dialog
+                _updateStatus('Cancelled');
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showChangeStatusDialog() {
+    const Map<String, List<String>> statusTransitions = {
+      'Pending': ['In Progress', 'Cancelled'],
+      'In Progress': ['On Hold', 'Completed', 'Cancelled'],
+      'On Hold': ['In Progress', 'Cancelled'],
+    };
+
+    final currentStatus = _jobDetails.status;
+    var availableTransitions = statusTransitions[currentStatus] ?? [];
+
+    if (_areAllTasksCompleted) {
+      availableTransitions = availableTransitions
+          .where((s) => s != 'On Hold')
+          .toList();
+    }
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Change Status To'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
-            children: [
-              buildStatusRadioListTile('Assigned'),
-              buildStatusRadioListTile('In Progress'),
-              buildStatusRadioListTile('On Hold'),
-              buildStatusRadioListTile('Completed'),
-              buildStatusRadioListTile('Cancelled'),
-            ],
+            children: availableTransitions.isEmpty
+                ? [const Text('No further actions available.')]
+                : availableTransitions.map((nextStatus) {
+                    bool isEnabled = true;
+                    String title = nextStatus;
+
+                    if (nextStatus == 'Completed' && !_areAllTasksCompleted) {
+                      isEnabled = false;
+                      title = 'Completed (Finish all tasks first)';
+                    }
+
+                    return ListTile(
+                      title: Text(
+                        title,
+                        style: TextStyle(
+                          color: isEnabled ? Colors.black : Colors.grey,
+                        ),
+                      ),
+                      onTap: isEnabled
+                          ? () {
+                              Navigator.of(context).pop();
+                              if (nextStatus == 'Cancelled') {
+                                _showCancelConfirmationDialog();
+                              } else {
+                                _updateStatus(nextStatus);
+                              }
+                            }
+                          : null,
+                    );
+                  }).toList(),
           ),
         );
       },
@@ -63,26 +237,31 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
   }
 
   Future<void> _updateStatus(String newStatus) async {
+    setState(() {
+      _isUpdating = true;
+    });
+
     try {
-      await SupabaseService().updateJobStatus(_jobDetails.id, newStatus);
-      setState(() {
-        _jobDetails = JobDetails(
-          id: _jobDetails.id,
-          customerName: _jobDetails.customerName,
-          customerPhone: _jobDetails.customerPhone,
-          vehicle: _jobDetails.vehicle,
-          plateNumber: _jobDetails.plateNumber,
-          jobDescription: _jobDetails.jobDescription,
-          requestedServices: _jobDetails.requestedServices,
-          assignedParts: _jobDetails.assignedParts,
-          remarks: _jobDetails.remarks,
-          status: newStatus,
-          timeElapsed: _jobDetails.timeElapsed,
-          createdAt: _jobDetails.createdAt,
+      if (newStatus == 'On Hold') {
+        final tasksToPause = _jobDetails.requestedServices.where(
+          (task) => task.status == 'In Progress',
         );
-      });
+        for (final task in tasksToPause) {
+          await _pauseTask(task); // Use the new handler
+        }
+      }
+
+      await SupabaseService().updateJobStatus(_jobDetails.id, newStatus);
+      await _refreshJobDetails();
+      _showSuccessSnackBar('Status updated to $newStatus');
     } catch (e) {
-      // Handle error
+      _showErrorSnackBar('Error updating status: ${e.toString()}');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isUpdating = false;
+        });
+      }
     }
   }
 
@@ -108,31 +287,40 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Column(
-          children: [
-            _buildJobDetailsHeader(),
-            Expanded(
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildCustomerSection(),
-                    _buildVehicleSection(),
-                    _buildJobStatusSection(),
-                    _buildJobDescriptionSection(),
-                    _buildRequestedServicesSection(),
-                    _buildAssignedPartsSection(),
-                    _buildRemarksSection(),
-                    _buildVehicleServiceHistorySection(),
-                    const SizedBox(height: 20),
-                  ],
+      body: Stack(
+        children: [
+          SafeArea(
+            child: Column(
+              children: [
+                _buildJobDetailsHeader(),
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildCustomerSection(),
+                        _buildVehicleSection(),
+                        _buildJobStatusSection(),
+                        _buildJobDescriptionSection(),
+                        _buildRequestedServicesSection(),
+                        _buildAssignedPartsSection(),
+                        _buildRemarksSection(),
+                        _buildVehicleServiceHistorySection(),
+                        const SizedBox(height: 20),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
+                _buildActionButtons(),
+              ],
             ),
-            _buildActionButtons(),
-          ],
-        ),
+          ),
+          if (_isUpdating)
+            Container(
+              color: Colors.black.withOpacity(0.5),
+              child: const Center(child: CircularProgressIndicator()),
+            ),
+        ],
       ),
     );
   }
@@ -170,6 +358,7 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
               ),
             ),
           ),
+          const SizedBox(width: 48),
         ],
       ),
     );
@@ -362,7 +551,14 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
           ),
         ),
         ..._jobDetails.requestedServices.map(
-              (service) => ServiceTaskWidget(task: service),
+          (task) => ServiceTaskWidget(
+            task: task,
+            jobStatus: _jobDetails.status,
+            isUpdating: _isUpdating,
+            onStart: () => _startTask(task),
+            onPause: () => _pauseTask(task),
+            onComplete: () => _completeTask(task),
+          ),
         ),
       ],
     );
@@ -587,6 +783,166 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
   }
 
   Widget _buildActionButtons() {
+    // If job is Cancelled, hide everything
+    if (_jobDetails.status == 'Cancelled') {
+      return const SizedBox.shrink();
+    }
+
+    // ✅ If job is Completed
+    if (_jobDetails.status == 'Completed') {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            if (_jobDetails.signatureUrl == null ||
+                _jobDetails.signatureUrl!.isEmpty)
+              GestureDetector(
+                onTap: () async {
+                  final result = await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          DigitalSignOffPage(jobId: _jobDetails.id),
+                    ),
+                  );
+
+                  if (result == true) {
+                    print(
+                      'Signature page returned success, refreshing job details...',
+                    );
+
+                    // Since the signature page only returns true when signature is confirmed saved,
+                    // we can do a simple refresh with shorter delay
+                    await Future.delayed(const Duration(milliseconds: 500));
+
+                    try {
+                      final freshJobDetails = await SupabaseService()
+                          .getSingleJobDetails(_jobDetails.id);
+                      print('Fresh job details loaded');
+                      print(
+                        'New signature URL: ${freshJobDetails.signatureUrl}',
+                      );
+
+                      if (mounted) {
+                        setState(() {
+                          _jobDetails = freshJobDetails;
+                        });
+
+                        // Show success message to user
+                        _showSuccessSnackBar('Signature saved successfully!');
+                      }
+                    } catch (e) {
+                      print('Error refreshing job details: $e');
+                      _showErrorSnackBar(
+                        'Signature saved but failed to refresh display.',
+                      );
+                    }
+                  }
+                },
+                child: Container(
+                  height: 40,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    color: const Color(0xFFDEE8F2),
+                  ),
+                  child: const Center(
+                    child: Text(
+                      'Customer Sign-Off',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF121417),
+                      ),
+                    ),
+                  ),
+                ),
+              )
+            else
+              Column(
+                children: [
+                  const Text(
+                    "Customer Sign-Off",
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                      color: Color(0xFF121417),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+
+                  // 👇 Updated toggle button with matching design
+                  GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _showSignature = !_showSignature;
+                      });
+                    },
+                    child: Container(
+                      height: 40,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        color: const Color(0xFFDEE8F2),
+                      ),
+                      child: Center(
+                        child: Text(
+                          _showSignature ? "Hide Signature" : "Show Signature",
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF121417),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 10),
+
+                  // 👇 Only build FutureBuilder if toggled ON
+                  if (_showSignature)
+                    FutureBuilder<String?>(
+                      future: SupabaseService().getSignedUrl(
+                        _jobDetails.signatureUrl!,
+                      ),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return const CircularProgressIndicator();
+                        }
+                        if (snapshot.hasError ||
+                            !snapshot.hasData ||
+                            snapshot.data == null) {
+                          return const Text(
+                            "Failed to load signature",
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Color(0xFF6B7582),
+                            ),
+                          );
+                        }
+                        return Container(
+                          margin: const EdgeInsets.only(top: 10),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: const Color(0xFFF2F2F5)),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: Image.network(
+                              snapshot.data!,
+                              height: 150,
+                              fit: BoxFit.contain,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                ],
+              ),
+          ],
+        ),
+      );
+    }
     return Container(
       padding: const EdgeInsets.all(16),
       child: Row(
