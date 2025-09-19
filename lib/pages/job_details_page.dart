@@ -816,39 +816,40 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
                   ),
 
                   // Edit + Delete buttons (unchanged)
-                  Row(
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.edit, color: Colors.black),
-                        onPressed: () async {
-                          final updatedRemark = await Navigator.push<Remark>(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => RemarkFormPage(
-                                jobId: _jobDetails.id,
-                                userId: 2,
-                                remark: remark,
+                  if (_jobDetails.status != 'Completed' && _jobDetails.status != 'Cancelled')
+                    Row(
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.edit, color: Colors.black),
+                          onPressed: () async {
+                            final updatedRemark = await Navigator.push<Remark>(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => RemarkFormPage(
+                                  jobId: _jobDetails.id,
+                                  userId: 2,
+                                  remark: remark,
+                                ),
                               ),
-                            ),
-                          );
-
-                          if (updatedRemark != null) {
-                            final idx = _jobDetails.remarks.indexWhere(
-                              (r) => r.id == updatedRemark.id,
                             );
-                            if (idx != -1) {
-                              _jobDetails.remarks[idx] = updatedRemark;
-                              (context as Element).markNeedsBuild();
+
+                            if (updatedRemark != null) {
+                              final idx = _jobDetails.remarks.indexWhere(
+                                (r) => r.id == updatedRemark.id,
+                              );
+                              if (idx != -1) {
+                                _jobDetails.remarks[idx] = updatedRemark;
+                                (context as Element).markNeedsBuild();
+                              }
                             }
-                          }
-                        },
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.delete, color: Colors.black),
-                        onPressed: () => _showDeleteConfirmationDialog(remark.id),
-                      ),
-                    ],
-                  ),
+                          },
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.delete, color: Colors.black),
+                          onPressed: () => _showDeleteConfirmationDialog(remark.id),
+                        ),
+                      ],
+                    ),
                 ],
               ),
             ),
