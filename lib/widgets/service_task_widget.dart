@@ -1,7 +1,8 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../models/service_task.dart';
 
-class ServiceTaskWidget extends StatelessWidget {
+class ServiceTaskWidget extends StatefulWidget {
   final ServiceTask task;
   final VoidCallback onStart;
   final VoidCallback onPause;
@@ -16,6 +17,59 @@ class ServiceTaskWidget extends StatelessWidget {
     required this.onComplete,
     this.isUpdating = false,
   }) : super(key: key);
+
+  @override
+  _ServiceTaskWidgetState createState() => _ServiceTaskWidgetState();
+}
+
+class _ServiceTaskWidgetState extends State<ServiceTaskWidget> {
+  Timer? _timer;
+  late int _duration;
+
+  @override
+  void initState() {
+    super.initState();
+    _duration = widget.task.duration;
+    if (widget.task.status == 'In Progress' && widget.task.sessionStartTime != null) {
+      final elapsed = DateTime.now().difference(widget.task.sessionStartTime!).inSeconds;
+      _duration += elapsed;
+    }
+    if (widget.task.status == 'In Progress') {
+      _startTimer();
+    }
+  }
+
+  @override
+  void didUpdateWidget(ServiceTaskWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.task.status != oldWidget.task.status) {
+      if (widget.task.status == 'In Progress') {
+        _startTimer();
+      } else {
+        _timer?.cancel();
+      }
+    }
+    if (widget.task.duration != oldWidget.task.duration) {
+      setState(() {
+        _duration = widget.task.duration;
+      });
+    }
+  }
+
+  void _startTimer() {
+    _timer?.cancel(); // Cancel any existing timer
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      setState(() {
+        _duration++;
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
 
   String _formatDuration(int totalSeconds) {
     final duration = Duration(seconds: totalSeconds);
@@ -54,7 +108,7 @@ class ServiceTaskWidget extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  task.serviceName,
+                  widget.task.serviceName,
                   style: const TextStyle(
                     fontSize: 16,
                     color: Color(0xFF121417),
@@ -64,13 +118,13 @@ class ServiceTaskWidget extends StatelessWidget {
                 Row(
                   children: [
                     Text(
-                      "Status: ${task.status}",
+                      "Status: ${widget.task.status}",
                       style: const TextStyle(
                         fontSize: 14,
                         color: Color(0xFF6B7280),
                       ),
                     ),
-                    if (isUpdating) ...[
+                    if (widget.isUpdating) ...[
                       const SizedBox(width: 8),
                       const SizedBox(
                         width: 12,
@@ -93,7 +147,7 @@ class ServiceTaskWidget extends StatelessWidget {
               color: const Color(0xFFF2F2F5),
             ),
             child: Text(
-              _formatDuration(task.duration),
+              _formatDuration(_duration),
               style: const TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 14,
@@ -107,12 +161,12 @@ class ServiceTaskWidget extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               // Start/Pause button
-              if (task.status == "In Progress")
-                _buildIconButton(icon: Icons.pause, onPressed: onPause)
+              if (widget.task.status == "In Progress")
+                _buildIconButton(icon: Icons.pause, onPressed: widget.onPause)
               else
-                _buildIconButton(icon: Icons.play_arrow, onPressed: onStart, disabled: task.status == 'Completed'),
+                _buildIconButton(icon: Icons.play_arrow, onPressed: widget.onStart, disabled: widget.task.status == 'Completed'),
               const SizedBox(width: 4),
-              _buildIconButton(icon: Icons.check, onPressed: onComplete, disabled: task.status == 'Completed'),
+              _buildIconButton(icon: Icons.check, onPressed: widget.onComplete, disabled: widget.task.status == 'Completed'),
             ],
           ),
         ],
@@ -136,7 +190,7 @@ class ServiceTaskWidget extends StatelessWidget {
         padding: EdgeInsets.zero,
         iconSize: 16,
         icon: Icon(icon, color: disabled ? Colors.grey : Colors.black),
-        onPressed: (isUpdating || disabled) ? null : onPressed,
+        onPressed: (widget.isUpdating || disabled) ? null : onPressed,
       ),
     );
   }
