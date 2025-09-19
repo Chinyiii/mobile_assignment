@@ -51,8 +51,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
   Future<void> _pickImage() async {
     final picker = ImagePicker();
-    final pickedFile =
-    await picker.pickImage(source: ImageSource.gallery, imageQuality: 60);
+    final pickedFile = await picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 60,
+    );
 
     if (pickedFile != null) {
       final bytes = await pickedFile.readAsBytes();
@@ -66,12 +68,15 @@ class _EditProfilePageState extends State<EditProfilePage> {
     final email = emailController.text;
     if (email.isEmpty) return;
 
-    await supabase.from('users').update({
-      'name': nameController.text,
-      'phone_number': phoneController.text,
-      'address': addressController.text,
-      'profile_pic': base64Image,
-    }).eq('email', email);
+    await supabase
+        .from('users')
+        .update({
+          'name': nameController.text,
+          'phone_number': phoneController.text,
+          'address': addressController.text,
+          'profile_pic': base64Image,
+        })
+        .eq('email', email);
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -79,6 +84,15 @@ class _EditProfilePageState extends State<EditProfilePage> {
       );
       Navigator.pop(context);
     }
+  }
+
+  @override
+  void dispose() {
+    nameController.dispose();
+    phoneController.dispose();
+    emailController.dispose();
+    addressController.dispose();
+    super.dispose();
   }
 
   @override
@@ -145,11 +159,17 @@ class _EditProfilePageState extends State<EditProfilePage> {
                           radius: 60,
                           backgroundImage: bytes != null
                               ? MemoryImage(bytes)
-                              : const AssetImage("assets/images/default_avatar.png")
-                                  as ImageProvider,
+                              : const AssetImage(
+                                      "assets/images/default_avatar.png",
+                                    )
+                                    as ImageProvider,
                           child: const Align(
                             alignment: Alignment.bottomRight,
-                            child: Icon(Icons.camera_alt, color: Colors.white, size: 30),
+                            child: Icon(
+                              Icons.camera_alt,
+                              color: Colors.white,
+                              size: 30,
+                            ),
                           ),
                         ),
                       ),
@@ -226,7 +246,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
           labelText: labelText,
           prefixIcon: Icon(icon, color: const Color(0xFF61758A)),
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 16,
+          ),
         ),
       ),
     );

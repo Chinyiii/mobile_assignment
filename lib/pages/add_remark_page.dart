@@ -57,9 +57,9 @@ class _RemarkFormPageState extends State<RemarkFormPage> {
 
   Future<void> _saveRemark() async {
     if (_descriptionController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please add a description")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Please add a description")));
       return;
     }
 
@@ -88,7 +88,10 @@ class _RemarkFormPageState extends State<RemarkFormPage> {
         // 2️⃣ Upload new images and get their public URLs
         final List<String> newUploadedUrls = [];
         for (final file in _selectedImages) {
-          final publicUrl = await SupabaseService().uploadRemarkImage(widget.remark!.id, file);
+          final publicUrl = await SupabaseService().uploadRemarkImage(
+            widget.remark!.id,
+            file,
+          );
           newUploadedUrls.add(publicUrl);
         }
         _selectedImages.clear(); // clear selected files after upload
@@ -112,12 +115,18 @@ class _RemarkFormPageState extends State<RemarkFormPage> {
         Navigator.pop(context, updatedRemark);
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error saving remark: $e")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Error saving remark: $e")));
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }
+  }
+
+  @override
+  void dispose() {
+    _descriptionController.dispose();
+    super.dispose();
   }
 
   @override
@@ -175,13 +184,13 @@ class _RemarkFormPageState extends State<RemarkFormPage> {
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
                       itemCount:
-                      _existingImages.length + _selectedImages.length + 2,
+                          _existingImages.length + _selectedImages.length + 2,
                       gridDelegate:
-                      const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 3,
-                        crossAxisSpacing: 8,
-                        mainAxisSpacing: 8,
-                      ),
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 3,
+                            crossAxisSpacing: 8,
+                            mainAxisSpacing: 8,
+                          ),
                       itemBuilder: (context, index) {
                         if (index < _existingImages.length) {
                           final url = _existingImages[index];
@@ -189,8 +198,12 @@ class _RemarkFormPageState extends State<RemarkFormPage> {
                             url: url,
                             onRemove: () {
                               setState(() {
-                                _deletedImages.add(_existingImages[index]); // mark for deletion
-                                _existingImages.removeAt(index); // remove from local preview
+                                _deletedImages.add(
+                                  _existingImages[index],
+                                ); // mark for deletion
+                                _existingImages.removeAt(
+                                  index,
+                                ); // remove from local preview
                               });
                             },
                           );
@@ -201,7 +214,8 @@ class _RemarkFormPageState extends State<RemarkFormPage> {
                           return _ImageTile.file(
                             file: file,
                             onRemove: () => setState(
-                                    () => _selectedImages.removeAt(fileIndex)),
+                              () => _selectedImages.removeAt(fileIndex),
+                            ),
                           );
                         } else if (index ==
                             _existingImages.length + _selectedImages.length) {
@@ -225,20 +239,22 @@ class _RemarkFormPageState extends State<RemarkFormPage> {
                       child: _isSaving
                           ? const CircularProgressIndicator()
                           : ElevatedButton(
-                        onPressed: _saveRemark,
-                        style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 24, vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: Text(
-                          widget.remark == null
-                              ? "Save Remark"
-                              : "Update Remark",
-                        ),
-                      ),
+                              onPressed: _saveRemark,
+                              style: ElevatedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 24,
+                                  vertical: 12,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              child: Text(
+                                widget.remark == null
+                                    ? "Save Remark"
+                                    : "Update Remark",
+                              ),
+                            ),
                     ),
                   ],
                 ),
@@ -302,9 +318,10 @@ class _ImageTile extends StatelessWidget {
   final VoidCallback onRemove;
 
   const _ImageTile.network({required this.url, required this.onRemove})
-      : file = null;
+    : file = null;
+
   const _ImageTile.file({required this.file, required this.onRemove})
-      : url = null;
+    : url = null;
 
   @override
   Widget build(BuildContext context) {
@@ -342,6 +359,7 @@ class _AddTile extends StatelessWidget {
   final VoidCallback onTap;
 
   const _AddTile({required this.icon, required this.onTap});
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(

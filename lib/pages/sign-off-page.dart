@@ -101,6 +101,12 @@ class _DigitalSignOffPageState extends State<DigitalSignOffPage> {
   }
 
   @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
