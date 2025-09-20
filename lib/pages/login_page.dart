@@ -119,22 +119,6 @@ class _LoginPageState extends State<LoginPage> {
                     obscureText: true,
                   ),
 
-                  // 👉 Forget Password link
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: TextButton(
-                      onPressed: () {
-                        Navigator.pushNamed(context, '/forgot_password');
-                      },
-                      child: const Text(
-                        "Forgot Password?",
-                        style: TextStyle(
-                          color: Colors.blue,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                  ),
                   const SizedBox(height: 32),
 
                   // Login button
