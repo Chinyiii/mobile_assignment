@@ -13,7 +13,6 @@ class RemarkViewPage extends StatelessWidget {
       body: SafeArea(
         child: Column(
           children: [
-            // ✅ Same header style
             _RemarkViewHeader(onBack: () => Navigator.pop(context)),
 
             Expanded(
@@ -104,7 +103,9 @@ class _RemarkTextSection extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
           child: Text(
-            remark.text.trim().isNotEmpty ? remark.text : 'No description provided.',
+            remark.text.trim().isNotEmpty
+                ? remark.text
+                : 'No description provided.',
             style: const TextStyle(fontSize: 16, color: Color(0xFF121417)),
           ),
         ),

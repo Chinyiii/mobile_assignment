@@ -84,14 +84,14 @@ class _RemarkFormPageState extends State<RemarkFormPage> {
       } else {
         // EDIT existing remark
 
-        // 1️⃣ Delete removed images from storage and DB
+        //Delete removed images from storage and DB
         for (final url in _deletedImages) {
           await SupabaseService().deleteRemarkPhoto(widget.remark!.id, url);
           _existingImages.remove(url);
         }
         _deletedImages.clear();
 
-        // 2️⃣ Upload new images and get their public URLs
+        //Upload new images and get their public URLs
         final List<String> newUploadedUrls = [];
         for (final file in _selectedImages) {
           final publicUrl = await SupabaseService().uploadRemarkImage(
@@ -102,16 +102,16 @@ class _RemarkFormPageState extends State<RemarkFormPage> {
         }
         _selectedImages.clear(); // clear selected files after upload
 
-        // 3️⃣ Combine existing images + newly uploaded URLs
+        //Combine existing images + newly uploaded URLs
         final allImages = [..._existingImages, ...newUploadedUrls];
 
-        // 4️⃣ Update remark text only (images already inserted)
+        //Update remark text only (images already inserted)
         await SupabaseService().updateRemark(
           remarkId: widget.remark!.id,
           newText: _descriptionController.text.trim(),
         );
 
-        // 5️⃣ Return updated remark
+        //Return updated remark
         final updatedRemark = Remark(
           id: widget.remark!.id,
           text: _descriptionController.text.trim(),
@@ -187,10 +187,10 @@ class _RemarkFormPageState extends State<RemarkFormPage> {
                           _existingImages.length + _selectedImages.length + 2,
                       gridDelegate:
                           const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 3,
-                        crossAxisSpacing: 8,
-                        mainAxisSpacing: 8,
-                      ),
+                            crossAxisCount: 3,
+                            crossAxisSpacing: 8,
+                            mainAxisSpacing: 8,
+                          ),
                       itemBuilder: (context, index) {
                         if (index < _existingImages.length) {
                           final url = _existingImages[index];
@@ -321,9 +321,10 @@ class _ImageTile extends StatelessWidget {
   final VoidCallback onRemove;
 
   const _ImageTile.network({required this.url, required this.onRemove})
-      : file = null;
+    : file = null;
+
   const _ImageTile.file({required this.file, required this.onRemove})
-      : url = null;
+    : url = null;
 
   @override
   Widget build(BuildContext context) {
@@ -361,7 +362,12 @@ class _AddTile extends StatelessWidget {
   final String label;
   final VoidCallback onTap;
 
-  const _AddTile({required this.icon, required this.label, required this.onTap});
+  const _AddTile({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(

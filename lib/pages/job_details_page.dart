@@ -734,127 +734,134 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
         else
           ..._jobDetails.remarks.map(
             (remark) => GestureDetector(
-            onTap: () {
-              // 👇 Navigate to read-only view page
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => RemarkViewPage(remark: remark),
-                ),
-              );
-            },
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Icon
-                  Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(8),
-                      color: const Color(0xFFF2F2F5),
-                    ),
-                    child: const Icon(
-                      Icons.note,
-                      color: Color(0xFF121417),
-                      size: 24,
-                    ),
+              onTap: () {
+                // Navigate to read-only view page
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => RemarkViewPage(remark: remark),
                   ),
-                  const SizedBox(width: 16),
+                );
+              },
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Icon
+                    Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(8),
+                        color: const Color(0xFFF2F2F5),
+                      ),
+                      child: const Icon(
+                        Icons.note,
+                        color: Color(0xFF121417),
+                        size: 24,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
 
-                  // Remark text + images
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        if (remark.text.trim().isNotEmpty)
-                          Text(
-                            remark.text,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis, // preview only
-                            style: const TextStyle(
-                              fontSize: 14,
-                              color: Color(0xFF6B7582),
+                    // Remark text + images
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (remark.text.trim().isNotEmpty)
+                            Text(
+                              remark.text,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              // preview only
+                              style: const TextStyle(
+                                fontSize: 14,
+                                color: Color(0xFF6B7582),
+                              ),
                             ),
-                          ),
-                        const SizedBox(height: 6),
-                        if (remark.imageUrls.isNotEmpty)
-                          Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
-                            children: remark.imageUrls
-                                .where((url) => url.isNotEmpty)
-                                .take(2) // 👈 preview up to 2 images
-                                .map((url) {
-                                  return ClipRRect(
-                                    borderRadius: BorderRadius.circular(6),
-                                    child: Image.network(
-                                      url,
-                                      width: 50,
-                                      height: 50,
-                                      fit: BoxFit.cover,
-                                      errorBuilder:
-                                          (context, error, stackTrace) =>
-                                              Container(
-                                                width: 50,
-                                                height: 50,
-                                                color: Colors.grey[300],
-                                                child: const Icon(
-                                                  Icons.broken_image,
-                                                  size: 20,
+                          const SizedBox(height: 6),
+                          if (remark.imageUrls.isNotEmpty)
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: remark.imageUrls
+                                  .where((url) => url.isNotEmpty)
+                                  .take(2) // preview up to 2 images
+                                  .map((url) {
+                                    return ClipRRect(
+                                      borderRadius: BorderRadius.circular(6),
+                                      child: Image.network(
+                                        url,
+                                        width: 50,
+                                        height: 50,
+                                        fit: BoxFit.cover,
+                                        errorBuilder:
+                                            (context, error, stackTrace) =>
+                                                Container(
+                                                  width: 50,
+                                                  height: 50,
+                                                  color: Colors.grey[300],
+                                                  child: const Icon(
+                                                    Icons.broken_image,
+                                                    size: 20,
+                                                  ),
                                                 ),
-                                              ),
+                                      ),
+                                    );
+                                  })
+                                  .toList(),
+                            ),
+                        ],
+                      ),
+                    ),
+
+                    // Edit + Delete buttons (unchanged)
+                    if (_jobDetails.status != 'Completed' &&
+                        _jobDetails.status != 'Cancelled')
+                      Row(
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.edit, color: Colors.black),
+                            onPressed: () async {
+                              final updatedRemark =
+                                  await Navigator.push<Remark>(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => RemarkFormPage(
+                                        jobId: _jobDetails.id,
+                                        userId: 2,
+                                        remark: remark,
+                                      ),
                                     ),
                                   );
-                                })
-                                .toList(),
-                          ),
-                      ],
-                    ),
-                  ),
 
-                  // Edit + Delete buttons (unchanged)
-                  if (_jobDetails.status != 'Completed' && _jobDetails.status != 'Cancelled')
-                    Row(
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.edit, color: Colors.black),
-                          onPressed: () async {
-                            final updatedRemark = await Navigator.push<Remark>(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => RemarkFormPage(
-                                  jobId: _jobDetails.id,
-                                  userId: 2,
-                                  remark: remark,
-                                ),
-                              ),
-                            );
-
-                            if (updatedRemark != null) {
-                              final idx = _jobDetails.remarks.indexWhere(
-                                (r) => r.id == updatedRemark.id,
-                              );
-                              if (idx != -1) {
-                                _jobDetails.remarks[idx] = updatedRemark;
-                                (context as Element).markNeedsBuild();
+                              if (updatedRemark != null) {
+                                final idx = _jobDetails.remarks.indexWhere(
+                                  (r) => r.id == updatedRemark.id,
+                                );
+                                if (idx != -1) {
+                                  _jobDetails.remarks[idx] = updatedRemark;
+                                  (context as Element).markNeedsBuild();
+                                }
                               }
-                            }
-                          },
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.delete, color: Colors.black),
-                          onPressed: () => _showDeleteConfirmationDialog(remark.id),
-                        ),
-                      ],
-                    ),
-                ],
+                            },
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.delete, color: Colors.black),
+                            onPressed: () =>
+                                _showDeleteConfirmationDialog(remark.id),
+                          ),
+                        ],
+                      ),
+                  ],
+                ),
               ),
             ),
           ),
-        ),
       ],
     );
   }
@@ -1049,7 +1056,7 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
                   ),
                   const SizedBox(height: 10),
 
-                  // 👇 Updated toggle button with matching design
+                  //Updated toggle button with matching design
                   GestureDetector(
                     onTap: () {
                       setState(() {
@@ -1077,7 +1084,7 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
 
                   const SizedBox(height: 10),
 
-                  // 👇 Only build FutureBuilder if toggled ON
+                  //Only build FutureBuilder if toggled ON
                   if (_showSignature)
                     FutureBuilder<String?>(
                       future: SupabaseService().getSignedUrl(

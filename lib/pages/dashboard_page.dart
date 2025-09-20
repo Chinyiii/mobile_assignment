@@ -57,16 +57,21 @@ class _DashboardPageState extends State<DashboardPage> {
       if (mounted) {
         setState(() {
           _allJobs = jobs;
-          _pendingJobs =
-              _allJobs.where((job) => job.status == 'Pending').toList();
-          _inProgressJobs =
-              _allJobs.where((job) => job.status == 'In Progress').toList();
-          _onHoldJobs =
-              _allJobs.where((job) => job.status == 'On Hold').toList();
-          _completedJobs =
-              _allJobs.where((job) => job.status == 'Completed').toList();
-          _cancelledJobs =
-              _allJobs.where((job) => job.status == 'Cancelled').toList();
+          _pendingJobs = _allJobs
+              .where((job) => job.status == 'Pending')
+              .toList();
+          _inProgressJobs = _allJobs
+              .where((job) => job.status == 'In Progress')
+              .toList();
+          _onHoldJobs = _allJobs
+              .where((job) => job.status == 'On Hold')
+              .toList();
+          _completedJobs = _allJobs
+              .where((job) => job.status == 'Completed')
+              .toList();
+          _cancelledJobs = _allJobs
+              .where((job) => job.status == 'Cancelled')
+              .toList();
           _isLoading = false;
         });
       }
@@ -131,27 +136,27 @@ class _DashboardPageState extends State<DashboardPage> {
               child: _isLoading
                   ? const Center(child: CircularProgressIndicator())
                   : _allJobs.isEmpty
-                      ? const Center(
-                          child: Text(
-                            'No jobs assigned for today.',
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Color(0xFF61758A),
-                            ),
-                          ),
-                        )
-                      : SingleChildScrollView(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              _buildJobList('In Progress', _inProgressJobs),
-                              _buildJobList('Pending', _pendingJobs),
-                              _buildJobList('On Hold', _onHoldJobs),
-                              _buildJobList('Completed', _completedJobs),
-                              _buildJobList('Cancelled', _cancelledJobs),
-                            ],
-                          ),
+                  ? const Center(
+                      child: Text(
+                        'No jobs assigned for today.',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Color(0xFF61758A),
                         ),
+                      ),
+                    )
+                  : SingleChildScrollView(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildJobList('In Progress', _inProgressJobs),
+                          _buildJobList('Pending', _pendingJobs),
+                          _buildJobList('On Hold', _onHoldJobs),
+                          _buildJobList('Completed', _completedJobs),
+                          _buildJobList('Cancelled', _cancelledJobs),
+                        ],
+                      ),
+                    ),
             ),
           ],
         ),
@@ -191,8 +196,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) =>
-                        JobDetailsPage(jobDetails: job),
+                    builder: (context) => JobDetailsPage(jobDetails: job),
                   ),
                 );
               },
@@ -220,8 +224,7 @@ class _DashboardPageState extends State<DashboardPage> {
                     // Job Details
                     Expanded(
                       child: Column(
-                        crossAxisAlignment:
-                            CrossAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             job.jobDescription,
@@ -251,9 +254,7 @@ class _DashboardPageState extends State<DashboardPage> {
                       ),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(16),
-                        color: _getStatusColor(
-                          job.status,
-                        ).withAlpha(26),
+                        color: _getStatusColor(job.status).withAlpha(26),
                       ),
                       child: Text(
                         job.status,

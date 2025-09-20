@@ -31,11 +31,11 @@ class _DigitalSignOffPageState extends State<DigitalSignOffPage> {
         if (signatureBytes != null) {
           print('Starting signature upload...');
 
-          // Step 1: Save the signature (upload + database update)
+          // Save the signature (upload + database update)
           await _supabaseService.saveJobSignOff(widget.jobId, signatureBytes);
           print('Signature saved to database');
 
-          // Step 2: Verify the signature was saved by fetching fresh job details
+          //Verify the signature was saved by fetching fresh job details
           print('Verifying signature was saved...');
           bool signatureSaved = false;
           int attempts = 0;
@@ -44,12 +44,18 @@ class _DigitalSignOffPageState extends State<DigitalSignOffPage> {
             attempts++;
             print('Verification attempt $attempts...');
 
-            await Future.delayed(Duration(seconds: attempts)); // Progressive delay
+            await Future.delayed(
+              Duration(seconds: attempts),
+            ); // Progressive delay
 
             try {
-              final freshJobDetails = await _supabaseService.getSingleJobDetails(widget.jobId);
-              if (freshJobDetails.signatureUrl != null && freshJobDetails.signatureUrl!.isNotEmpty) {
-                print('Signature verified! URL: ${freshJobDetails.signatureUrl}');
+              final freshJobDetails = await _supabaseService
+                  .getSingleJobDetails(widget.jobId);
+              if (freshJobDetails.signatureUrl != null &&
+                  freshJobDetails.signatureUrl!.isNotEmpty) {
+                print(
+                  'Signature verified! URL: ${freshJobDetails.signatureUrl}',
+                );
                 signatureSaved = true;
               } else {
                 print('Signature not yet available, retrying...');
@@ -61,14 +67,16 @@ class _DigitalSignOffPageState extends State<DigitalSignOffPage> {
 
           if (mounted) {
             if (signatureSaved) {
-              // Step 3: Only navigate back if signature is confirmed saved
+              //Only navigate back if signature is confirmed saved
               print('Navigation back to previous page...');
               Navigator.pop(context, true); // return success
             } else {
               // If verification failed, show error but don't navigate
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                  content: Text("Signature saved but couldn't verify. Please check manually."),
+                  content: Text(
+                    "Signature saved but couldn't verify. Please check manually.",
+                  ),
                   backgroundColor: Colors.orange,
                 ),
               );
@@ -77,7 +85,9 @@ class _DigitalSignOffPageState extends State<DigitalSignOffPage> {
         } else {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text("Failed to generate signature image")),
+              const SnackBar(
+                content: Text("Failed to generate signature image"),
+              ),
             );
           }
         }
@@ -161,8 +171,8 @@ class _DigitalSignOffPageState extends State<DigitalSignOffPage> {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Signature(
-                    controller: _controller,
-                    backgroundColor: Colors.white
+                  controller: _controller,
+                  backgroundColor: Colors.white,
                 ),
               ),
             ),
@@ -209,21 +219,21 @@ class _DigitalSignOffPageState extends State<DigitalSignOffPage> {
                         child: Center(
                           child: _isSaving
                               ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Color(0xFF121417)
-                            ),
-                          )
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Color(0xFF121417),
+                                  ),
+                                )
                               : const Text(
-                            'Save',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                              color: Color(0xFF121417),
-                            ),
-                          ),
+                                  'Save',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w700,
+                                    color: Color(0xFF121417),
+                                  ),
+                                ),
                         ),
                       ),
                     ),

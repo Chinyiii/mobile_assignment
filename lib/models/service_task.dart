@@ -23,9 +23,15 @@ class ServiceTask {
       serviceName: json['service_name'],
       status: json['status'],
       duration: json['duration'] ?? 0,
-      startTime: json['start_time'] != null ? DateTime.parse(json['start_time']) : null,
-      endTime: json['end_time'] != null ? DateTime.parse(json['end_time']) : null,
-      sessionStartTime: json['session_start_time'] != null ? DateTime.parse(json['session_start_time']) : null, // Added this
+      startTime: json['start_time'] != null
+          ? DateTime.parse(json['start_time'])
+          : null,
+      endTime: json['end_time'] != null
+          ? DateTime.parse(json['end_time'])
+          : null,
+      sessionStartTime: json['session_start_time'] != null
+          ? DateTime.parse(json['session_start_time'])
+          : null, // Added this
     );
   }
 

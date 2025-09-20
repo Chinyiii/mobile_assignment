@@ -382,10 +382,16 @@ class _ServiceHistoryDetailsPageState extends State<ServiceHistoryDetailsPage> {
                     ),
                     if (widget.serviceHistoryItem.remarks.isEmpty)
                       const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
                         child: Text(
                           'No remarks for this service.',
-                          style: TextStyle(fontSize: 14, color: Color(0xFF6B7582)),
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Color(0xFF6B7582),
+                          ),
                         ),
                       )
                     else
@@ -433,18 +439,28 @@ class _ServiceHistoryDetailsPageState extends State<ServiceHistoryDetailsPage> {
                                         runSpacing: 8,
                                         children: remark.imageUrls.map((url) {
                                           return ClipRRect(
-                                            borderRadius: BorderRadius.circular(8),
+                                            borderRadius: BorderRadius.circular(
+                                              8,
+                                            ),
                                             child: Image.network(
                                               url,
                                               width: 70,
                                               height: 70,
                                               fit: BoxFit.cover,
-                                              errorBuilder: (context, error, stackTrace) => Container(
-                                                width: 70,
-                                                height: 70,
-                                                color: Colors.grey[300],
-                                                child: const Icon(Icons.broken_image, size: 24),
-                                              ),
+                                              errorBuilder:
+                                                  (
+                                                    context,
+                                                    error,
+                                                    stackTrace,
+                                                  ) => Container(
+                                                    width: 70,
+                                                    height: 70,
+                                                    color: Colors.grey[300],
+                                                    child: const Icon(
+                                                      Icons.broken_image,
+                                                      size: 24,
+                                                    ),
+                                                  ),
                                             ),
                                           );
                                         }).toList(),

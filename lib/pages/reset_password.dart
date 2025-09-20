@@ -42,7 +42,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
       final user = supabase.auth.currentUser;
       if (user == null) throw 'No logged-in user';
 
-      // Step 1: Verify current password against Supabase Auth
+      //Verify current password against Supabase Auth
       final response = await supabase.auth.signInWithPassword(
         email: user.email!,
         password: current,
@@ -52,31 +52,31 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
         throw 'Current password is incorrect';
       }
 
-      // Step 2: Update password in Supabase Auth
-      await supabase.auth.updateUser(
-        UserAttributes(password: newPassword),
-      );
+      //Update password in Supabase Auth
+      await supabase.auth.updateUser(UserAttributes(password: newPassword));
 
-      // Step 3: Update password in custom users table (hashed)
+      //Update password in custom users table (hashed)
       final hashed = BCrypt.hashpw(newPassword, BCrypt.gensalt());
       await supabase
           .from('users')
           .update({'password': hashed})
           .eq('email', user.email!);
 
-      // Step 4: Log user out
+      //Log user out
       await authService.signOut();
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Password reset successfully! Please log in again.")),
+          const SnackBar(
+            content: Text("Password reset successfully! Please log in again."),
+          ),
         );
         Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error: $e")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Error: $e")));
     } finally {
       setState(() => _loading = false);
     }
@@ -150,7 +150,9 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                         _buildPasswordField(
                           controller: _newController,
                           labelText: "New Password",
-                          validator: (v) => v == null || v.length < 6 ? 'Enter at least 6 chars' : null,
+                          validator: (v) => v == null || v.length < 6
+                              ? 'Enter at least 6 chars'
+                              : null,
                         ),
                         const SizedBox(height: 16),
                         _buildPasswordField(
@@ -171,7 +173,9 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                               ),
                             ),
                             child: _loading
-                                ? const CircularProgressIndicator(color: Colors.white)
+                                ? const CircularProgressIndicator(
+                                    color: Colors.white,
+                                  )
                                 : const Text("Change Password"),
                           ),
                         ),
@@ -204,9 +208,14 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
           labelText: labelText,
           prefixIcon: const Icon(Icons.lock, color: Color(0xFF61758A)),
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 16,
+          ),
         ),
-        validator: validator ?? (v) => v == null || v.isEmpty ? 'Please enter the password' : null,
+        validator:
+            validator ??
+            (v) => v == null || v.isEmpty ? 'Please enter the password' : null,
       ),
     );
   }

@@ -79,7 +79,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   Navigator.pushNamedAndRemoveUntil(
                     context,
                     '/login',
-                        (route) => false,
+                    (route) => false,
                   );
                 }
               },
@@ -95,9 +95,7 @@ class _ProfilePageState extends State<ProfilePage> {
   Widget build(BuildContext context) {
     if (loading) {
       return const Scaffold(
-        body: SafeArea(
-          child: Center(child: CircularProgressIndicator()),
-        ),
+        body: SafeArea(child: Center(child: CircularProgressIndicator())),
       );
     }
 
@@ -140,7 +138,10 @@ class _ProfilePageState extends State<ProfilePage> {
             Expanded(
               child: SingleChildScrollView(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 24),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16.0,
+                    vertical: 24,
+                  ),
                   child: Column(
                     children: [
                       _buildProfileHeader(),
@@ -242,10 +243,7 @@ class _ProfilePageState extends State<ProfilePage> {
             const SizedBox(height: 4),
             Text(
               subtitle,
-              style: const TextStyle(
-                fontSize: 14,
-                color: Color(0xFF61758A),
-              ),
+              style: const TextStyle(fontSize: 14, color: Color(0xFF61758A)),
             ),
           ],
         ),
