@@ -4,7 +4,6 @@ import 'package:mobile_assignment/auth/auth_service.dart';
 import '../models/service_history_item.dart';
 import '../widgets/bottom_navigation_bar.dart';
 import 'service_history_details_page.dart';
-
 import 'package:mobile_assignment/models/job_details.dart';
 import 'package:mobile_assignment/services/supabase_service.dart';
 
@@ -16,20 +15,28 @@ class ServiceHistoryPage extends StatefulWidget {
 }
 
 class _ServiceHistoryPageState extends State<ServiceHistoryPage> {
-  String selectedFilter = 'All';
-  final List<String> filters = ['All', 'This Week', 'This Month', 'This Year'];
-  final TextEditingController _searchController = TextEditingController();
-
+  // Services for database interaction
   final SupabaseService _supabaseService = SupabaseService();
   final AuthService _authService = AuthService();
 
+  // Controllers and filters
+  final TextEditingController _searchController = TextEditingController();
+  String selectedFilter = 'All';
+  final List<String> filters = ['All', 'This Week', 'This Month', 'This Year'];
   String? selectedService;
   String? selectedPart;
+  String? selectedStatus = 'All';
+  final List<String> statusFilters = ['All', 'Completed', 'Cancelled'];
+
+  // Data lists
   List<String> allServices = [];
   List<String> allParts = [];
-  List<JobDetails> _completedJobs = [];
+  List<JobDetails> _historyJobs = [];
+
+  // UI state
   bool _isLoading = true;
 
+  // Real-time subscriptions
   StreamSubscription? _jobsSubscription;
   StreamSubscription? _servicesSubscription;
   StreamSubscription? _partsSubscription;
@@ -76,8 +83,10 @@ class _ServiceHistoryPageState extends State<ServiceHistoryPage> {
       ]);
       if (mounted) {
         setState(() {
-          _completedJobs = (results[0] as List<JobDetails>)
-              .where((job) => job.status == 'Completed')
+          _historyJobs = (results[0] as List<JobDetails>)
+              .where(
+                (job) => job.status == 'Completed' || job.status == 'Cancelled',
+              )
               .toList();
           allServices = results[1] as List<String>;
           allParts = results[2] as List<String>;
@@ -96,6 +105,7 @@ class _ServiceHistoryPageState extends State<ServiceHistoryPage> {
     }
   }
 
+  /// Subscribes to real-time updates for jobs, services, and parts.
   void _subscribeToUpdates() {
     _jobsSubscription = _supabaseService.getJobsStream().listen(
       (_) => _fetchInitialData(),
@@ -109,7 +119,7 @@ class _ServiceHistoryPageState extends State<ServiceHistoryPage> {
   }
 
   List<JobDetails> _filterItems(List<JobDetails> items) {
-    // Apply search filter
+    // Apply search filter for plate number or customer name.
     if (_searchController.text.isNotEmpty) {
       items = items.where((item) {
         return item.plateNumber.toLowerCase().contains(
@@ -127,19 +137,22 @@ class _ServiceHistoryPageState extends State<ServiceHistoryPage> {
       switch (selectedFilter) {
         case 'This Week':
           items = items.where((item) {
-            final difference = now.difference(item.createdAt).inDays;
+            final dateToCompare = item.endTime ?? item.createdAt;
+            final difference = now.difference(dateToCompare).inDays;
             return difference <= 7;
           }).toList();
           break;
         case 'This Month':
           items = items.where((item) {
-            return item.createdAt.month == now.month &&
-                item.createdAt.year == now.year;
+            final dateToCompare = item.endTime ?? item.createdAt;
+            return dateToCompare.month == now.month &&
+                dateToCompare.year == now.year;
           }).toList();
           break;
         case 'This Year':
           items = items.where((item) {
-            return item.createdAt.year == now.year;
+            final dateToCompare = item.endTime ?? item.createdAt;
+            return dateToCompare.year == now.year;
           }).toList();
           break;
       }
@@ -148,7 +161,6 @@ class _ServiceHistoryPageState extends State<ServiceHistoryPage> {
     // Apply service filter
     if (selectedService != null) {
       items = items.where((item) {
-        // Check if any task in the list has a matching service name
         return item.requestedServices.any(
           (task) => task.serviceName == selectedService,
         );
@@ -159,6 +171,13 @@ class _ServiceHistoryPageState extends State<ServiceHistoryPage> {
     if (selectedPart != null) {
       items = items.where((item) {
         return item.assignedParts.contains(selectedPart);
+      }).toList();
+    }
+
+    // Apply status filter
+    if (selectedStatus != null && selectedStatus != 'All') {
+      items = items.where((item) {
+        return item.status == selectedStatus;
       }).toList();
     }
 
@@ -312,9 +331,61 @@ class _ServiceHistoryPageState extends State<ServiceHistoryPage> {
     );
   }
 
+  void _showStatusFilterDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Filter by Status'),
+          content: StatefulBuilder(
+            builder: (BuildContext context, StateSetter setState) {
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                children: statusFilters.map((status) {
+                  return RadioListTile<String>(
+                    title: Text(status),
+                    value: status,
+                    groupValue: selectedStatus,
+                    onChanged: (String? value) {
+                      setState(() {
+                        selectedStatus = value;
+                      });
+                    },
+                  );
+                }).toList(),
+              );
+            },
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                setState(() {
+                  selectedStatus = 'All';
+                });
+                Navigator.of(context).pop();
+              },
+              child: const Text('Clear'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                setState(() {});
+              },
+              child: const Text('Apply'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final items = _filterItems(_completedJobs);
+    final items = _filterItems(_historyJobs);
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -322,12 +393,12 @@ class _ServiceHistoryPageState extends State<ServiceHistoryPage> {
         child: Column(
           children: [
             // Header
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            const Padding(
+              padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
               child: Row(
                 children: [
-                  const SizedBox(width: 48),
-                  const Expanded(
+                  SizedBox(width: 48),
+                  Expanded(
                     child: Text(
                       'Service History',
                       style: TextStyle(
@@ -338,11 +409,10 @@ class _ServiceHistoryPageState extends State<ServiceHistoryPage> {
                       textAlign: TextAlign.center,
                     ),
                   ),
-                  const SizedBox(width: 48), // Spacer for centering
+                  SizedBox(width: 48), // Spacer for centering
                 ],
               ),
             ),
-
             // Search Bar
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -354,17 +424,10 @@ class _ServiceHistoryPageState extends State<ServiceHistoryPage> {
                 ),
                 child: Row(
                   children: [
-                    Container(
+                    const SizedBox(
                       width: 48,
                       height: 48,
-                      decoration: const BoxDecoration(
-                        borderRadius: BorderRadius.only(
-                          topLeft: Radius.circular(12),
-                          bottomLeft: Radius.circular(12),
-                        ),
-                        color: Color(0xFFF0F2F5),
-                      ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.search,
                         color: Color(0xFF61758A),
                         size: 24,
@@ -411,10 +474,10 @@ class _ServiceHistoryPageState extends State<ServiceHistoryPage> {
                           borderRadius: BorderRadius.circular(16),
                           color: const Color(0xFFF0F2F5),
                         ),
-                        child: Row(
+                        child: const Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Text(
+                            Text(
                               'Filter by Date',
                               style: TextStyle(
                                 fontSize: 14,
@@ -422,8 +485,8 @@ class _ServiceHistoryPageState extends State<ServiceHistoryPage> {
                                 color: Color(0xFF121417),
                               ),
                             ),
-                            const SizedBox(width: 8),
-                            const Icon(
+                            SizedBox(width: 8),
+                            Icon(
                               Icons.filter_list,
                               size: 20,
                               color: Color(0xFF121417),
@@ -442,10 +505,10 @@ class _ServiceHistoryPageState extends State<ServiceHistoryPage> {
                           borderRadius: BorderRadius.circular(16),
                           color: const Color(0xFFF0F2F5),
                         ),
-                        child: Row(
+                        child: const Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Text(
+                            Text(
                               'Filter by Service',
                               style: TextStyle(
                                 fontSize: 14,
@@ -453,8 +516,8 @@ class _ServiceHistoryPageState extends State<ServiceHistoryPage> {
                                 color: Color(0xFF121417),
                               ),
                             ),
-                            const SizedBox(width: 8),
-                            const Icon(
+                            SizedBox(width: 8),
+                            Icon(
                               Icons.filter_list,
                               size: 20,
                               color: Color(0xFF121417),
@@ -473,10 +536,10 @@ class _ServiceHistoryPageState extends State<ServiceHistoryPage> {
                           borderRadius: BorderRadius.circular(16),
                           color: const Color(0xFFF0F2F5),
                         ),
-                        child: Row(
+                        child: const Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Text(
+                            Text(
                               'Filter by Part',
                               style: TextStyle(
                                 fontSize: 14,
@@ -484,8 +547,39 @@ class _ServiceHistoryPageState extends State<ServiceHistoryPage> {
                                 color: Color(0xFF121417),
                               ),
                             ),
-                            const SizedBox(width: 8),
-                            const Icon(
+                            SizedBox(width: 8),
+                            Icon(
+                              Icons.filter_list,
+                              size: 20,
+                              color: Color(0xFF121417),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    GestureDetector(
+                      onTap: _showStatusFilterDialog,
+                      child: Container(
+                        height: 32,
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(16),
+                          color: const Color(0xFFF0F2F5),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'Filter by Status',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                                color: Color(0xFF121417),
+                              ),
+                            ),
+                            SizedBox(width: 8),
+                            Icon(
                               Icons.filter_list,
                               size: 20,
                               color: Color(0xFF121417),
@@ -524,7 +618,7 @@ class _ServiceHistoryPageState extends State<ServiceHistoryPage> {
                           customerName: job.customerName,
                           customerPhone: job.customerPhone,
                           vehicle: job.vehicle,
-                          serviceDate: job.createdAt,
+                          serviceDate: job.endTime ?? job.createdAt,
                           serviceType: job.requestedServices
                               .map((task) => task.serviceName)
                               .join(', '),
@@ -604,6 +698,25 @@ class _ServiceHistoryPageState extends State<ServiceHistoryPage> {
                                     ],
                                   ),
                                 ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 4,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(12),
+                                    color: _getStatusColor(item.status)
+                                        .withAlpha(26),
+                                  ),
+                                  child: Text(
+                                    item.status,
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w500,
+                                      color: _getStatusColor(item.status),
+                                    ),
+                                  ),
+                                ),
                               ],
                             ),
                           ),
@@ -636,6 +749,17 @@ class _ServiceHistoryPageState extends State<ServiceHistoryPage> {
       return '$weeks weeks ago';
     } else {
       return '${date.day}/${date.month}/${date.year}';
+    }
+  }
+
+  Color _getStatusColor(String status) {
+    switch (status) {
+      case 'Completed':
+        return const Color(0xFF4CAF50); // Green
+      case 'Cancelled':
+        return const Color(0xFFF44336); // Red
+      default:
+        return Colors.grey; // Fallback
     }
   }
 }

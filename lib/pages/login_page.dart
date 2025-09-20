@@ -32,13 +32,11 @@ class _LoginPageState extends State<LoginPage> {
     setState(() => _isLoading = true);
 
     try {
-      final response = await authService.SignInWithEmailPassword(
-        email,
-        password,
-      );
+      final response =
+      await authService.SignInWithEmailPassword(email, password);
 
       if (response.session != null) {
-        //Login successful then go to dashboard
+        // ✅ Login successful → go to dashboard
         if (mounted) {
           Navigator.pushReplacementNamed(context, '/dashboard');
         }
@@ -47,8 +45,8 @@ class _LoginPageState extends State<LoginPage> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text("Login failed. Please check your credentials."),
-            ),
+                content:
+                Text("Login failed. Please check your credentials.")),
           );
         }
       }
@@ -63,13 +61,6 @@ class _LoginPageState extends State<LoginPage> {
     if (mounted) {
       setState(() => _isLoading = false);
     }
-  }
-
-  @override
-  void dispose() {
-    emailController.dispose();
-    passwordController.dispose();
-    super.dispose();
   }
 
   @override
@@ -104,7 +95,10 @@ class _LoginPageState extends State<LoginPage> {
                   const SizedBox(height: 8),
                   const Text(
                     "Sign in to continue",
-                    style: TextStyle(fontSize: 16, color: Color(0xFF61758A)),
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Color(0xFF61758A),
+                    ),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 48),
@@ -124,6 +118,7 @@ class _LoginPageState extends State<LoginPage> {
                     icon: Icons.lock_outline,
                     obscureText: true,
                   ),
+
                   const SizedBox(height: 32),
 
                   // Login button
@@ -141,12 +136,10 @@ class _LoginPageState extends State<LoginPage> {
                       child: _isLoading
                           ? const CircularProgressIndicator(color: Colors.white)
                           : const Text(
-                              "Login",
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
+                        "Login",
+                        style: TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.bold),
+                      ),
                     ),
                   ),
                 ],
@@ -176,10 +169,8 @@ class _LoginPageState extends State<LoginPage> {
           labelText: labelText,
           prefixIcon: Icon(icon, color: const Color(0xFF61758A)),
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 16,
-          ),
+          contentPadding:
+          const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         ),
       ),
     );

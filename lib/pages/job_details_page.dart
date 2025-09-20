@@ -183,6 +183,8 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
     }
   }
 
+  // --- Status Update Logic ---
+  /// Displays a confirmation dialog before cancelling a job.
   void _showCancelConfirmationDialog() {
     showDialog(
       context: context,
@@ -208,7 +210,9 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
     );
   }
 
+
   void _showChangeStatusDialog() {
+    // Defines the allowed transitions between job statuses.
     const Map<String, List<String>> statusTransitions = {
       'Pending': ['In Progress', 'Cancelled'],
       'In Progress': ['On Hold', 'Completed', 'Cancelled'],
@@ -218,6 +222,7 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
     final currentStatus = _jobDetails.status;
     var availableTransitions = statusTransitions[currentStatus] ?? [];
 
+    // If all tasks are completed, "On Hold" is not a valid next status.
     if (_areAllTasksCompleted) {
       availableTransitions = availableTransitions
           .where((s) => s != 'On Hold')
@@ -237,11 +242,11 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
                     bool isEnabled = true;
                     String title = nextStatus;
 
+                    // The "Completed" status can only be selected if all tasks are completed.
                     if (nextStatus == 'Completed' && !_areAllTasksCompleted) {
                       isEnabled = false;
                       title = 'Completed (Finish all tasks first)';
                     }
-
                     return ListTile(
                       title: Text(
                         title,
@@ -267,22 +272,27 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
     );
   }
 
+  /// Updates the job status in the database and refreshes the UI.
+  /// If the new status is "On Hold", it also pauses all "In Progress" tasks.
   Future<void> _updateStatus(String newStatus) async {
     setState(() {
       _isUpdating = true;
     });
 
     try {
+      // If the job is put on hold, pause all tasks that are currently in progress.
       if (newStatus == 'On Hold') {
         final tasksToPause = _jobDetails.requestedServices.where(
           (task) => task.status == 'In Progress',
         );
         for (final task in tasksToPause) {
-          await _pauseTask(task); // Use the new handler
+          await _pauseTask(task);
         }
       }
 
+      // Update the job status in the database.
       await SupabaseService().updateJobStatus(_jobDetails.id, newStatus);
+      // Refresh the job details to reflect the change.
       await _refreshJobDetails();
       _showSuccessSnackBar('Status updated to $newStatus');
     } catch (e) {

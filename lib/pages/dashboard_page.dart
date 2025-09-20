@@ -18,8 +18,6 @@ class _DashboardPageState extends State<DashboardPage> {
   List<JobDetails> _pendingJobs = [];
   List<JobDetails> _inProgressJobs = [];
   List<JobDetails> _onHoldJobs = [];
-  List<JobDetails> _completedJobs = [];
-  List<JobDetails> _cancelledJobs = [];
 
   bool _isLoading = true;
   StreamSubscription? _jobsSubscription;
@@ -54,6 +52,7 @@ class _DashboardPageState extends State<DashboardPage> {
       final jobs = await SupabaseService().getJobDetails(
         mechanicId: mechanicId,
       );
+
       if (mounted) {
         setState(() {
           _allJobs = jobs;
@@ -65,12 +64,6 @@ class _DashboardPageState extends State<DashboardPage> {
               .toList();
           _onHoldJobs = _allJobs
               .where((job) => job.status == 'On Hold')
-              .toList();
-          _completedJobs = _allJobs
-              .where((job) => job.status == 'Completed')
-              .toList();
-          _cancelledJobs = _allJobs
-              .where((job) => job.status == 'Cancelled')
               .toList();
           _isLoading = false;
         });
@@ -130,6 +123,17 @@ class _DashboardPageState extends State<DashboardPage> {
                 ],
               ),
             ),
+            const Padding(
+              padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
+              child: Text(
+                "Today's Jobs",
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF121417),
+                ),
+              ),
+            ),
 
             // Today's Jobs
             Expanded(
@@ -152,8 +156,6 @@ class _DashboardPageState extends State<DashboardPage> {
                           _buildJobList('In Progress', _inProgressJobs),
                           _buildJobList('Pending', _pendingJobs),
                           _buildJobList('On Hold', _onHoldJobs),
-                          _buildJobList('Completed', _completedJobs),
-                          _buildJobList('Cancelled', _cancelledJobs),
                         ],
                       ),
                     ),
