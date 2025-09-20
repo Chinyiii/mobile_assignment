@@ -10,6 +10,7 @@ import 'package:mobile_assignment/models/service_task.dart';
 import 'package:mobile_assignment/pages/remark_view_page.dart';
 import 'add_remark_page.dart';
 import '../models/remark.dart';
+import 'package:mobile_assignment/auth/auth_service.dart';
 
 class JobDetailsPage extends StatefulWidget {
   final JobDetails jobDetails;
@@ -21,6 +22,7 @@ class JobDetailsPage extends StatefulWidget {
 }
 
 class _JobDetailsPageState extends State<JobDetailsPage> {
+  final AuthService _authService = AuthService();
   late JobDetails _jobDetails;
   late Future<List<ServiceHistoryItem>> _serviceHistoryFuture;
   bool _isUpdating = false;
@@ -678,10 +680,23 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
   }
 
   Future<void> _navigateToAddRemarkPage() async {
+    final userId = await _authService.getCurrentUserId();
+    if (userId == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("You must be logged in to add a remark."),
+          ),
+        );
+      }
+      return;
+    }
+
     final newRemark = await Navigator.push<Remark>(
       context,
       MaterialPageRoute(
-        builder: (context) => RemarkFormPage(jobId: _jobDetails.id, userId: 2),
+        builder: (context) =>
+            RemarkFormPage(jobId: _jobDetails.id, userId: userId),
       ),
     );
 
@@ -827,25 +842,39 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
                           IconButton(
                             icon: const Icon(Icons.edit, color: Colors.black),
                             onPressed: () async {
+                              final userId = await _authService
+                                  .getCurrentUserId();
+                              if (userId == null) {
+                                if (mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        "You must be logged in to edit a remark.",
+                                      ),
+                                    ),
+                                  );
+                                }
+                                return;
+                              }
                               final updatedRemark =
                                   await Navigator.push<Remark>(
                                     context,
                                     MaterialPageRoute(
                                       builder: (context) => RemarkFormPage(
                                         jobId: _jobDetails.id,
-                                        userId: 2,
+                                        userId: userId,
                                         remark: remark,
                                       ),
                                     ),
                                   );
-
                               if (updatedRemark != null) {
                                 final idx = _jobDetails.remarks.indexWhere(
                                   (r) => r.id == updatedRemark.id,
                                 );
                                 if (idx != -1) {
-                                  _jobDetails.remarks[idx] = updatedRemark;
-                                  (context as Element).markNeedsBuild();
+                                  setState(() {
+                                    _jobDetails.remarks[idx] = updatedRemark;
+                                  });
                                 }
                               }
                             },
