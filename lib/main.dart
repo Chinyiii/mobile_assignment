@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'pages/dashboard_page.dart';
-import 'package:mobile_assignment/pages/forgot_password.dart';
 import 'pages/login_page.dart';
 import 'pages/profile_page.dart';
 import 'pages/edit_profile_page.dart';
@@ -42,8 +41,7 @@ class MyApp extends StatelessWidget {
         '/dashboard': (context) => const DashboardPage(),
         '/profile': (context) => const ProfilePage(),
         '/edit_profile': (context) => const EditProfilePage(),
-        '/reset_password': (context) => const ResetPasswordPage(),
-        '/forgot_password': (context) => const ForgotPasswordPage(),
+        '/reset_password': (context) => const ResetPasswordPage()
       },
     );
   }
