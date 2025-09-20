@@ -88,6 +88,7 @@ class SupabaseService {
             job['end_time'],
           ),
           createdAt: DateTime.parse(job['created_at']),
+          endTime: job['end_time'] != null ? DateTime.parse(job['end_time']) : null,
           signatureUrl: job['sign_off_url'],
         ),
       );
@@ -175,6 +176,7 @@ class SupabaseService {
       status: job['status'],
       timeElapsed: _calculateTimeElapsed(job['start_time'], job['end_time']),
       createdAt: DateTime.parse(job['created_at']),
+      endTime: job['end_time'] != null ? DateTime.parse(job['end_time']) : null,
       signatureUrl: job['sign_off_url'],
     );
   }

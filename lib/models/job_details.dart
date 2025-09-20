@@ -14,6 +14,7 @@ class JobDetails {
   final String status;
   final String timeElapsed;
   final DateTime createdAt;
+  final DateTime? endTime;
   final String? signatureUrl;
 
   JobDetails({
@@ -29,6 +30,7 @@ class JobDetails {
     required this.status,
     required this.timeElapsed,
     required this.createdAt,
+    this.endTime,
     this.signatureUrl,
   });
 
@@ -56,6 +58,7 @@ class JobDetails {
       status: json['status'],
       timeElapsed: json['time_elapsed'],
       createdAt: DateTime.parse(json['created_at']),
+      endTime: json['end_time'] != null ? DateTime.parse(json['end_time']) : null,
       signatureUrl: json['sign_off_url'],
     );
   }
